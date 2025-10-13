@@ -1,9 +1,12 @@
-from rest_framework.routers import DefaultRouter
-from .views import CentreViewSet, CourseViewSet
+from django.urls import path, include
+from rest_framework import routers
+from .views import CentreViewSet, CourseViewSet, CentreStatsAPI
 
-# A router automatically creates URL patterns for ViewSets
-router = DefaultRouter()
-router.register(r'centres', CentreViewSet) # URL: /api/centres/
-router.register(r'courses', CourseViewSet) # URL: /api/courses/
+router = routers.DefaultRouter()
+router.register(r'centres', CentreViewSet)
+router.register(r'courses', CourseViewSet)
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('', include(router.urls)),
+    path('centre-stats/', CentreStatsAPI.as_view(), name='centre-stats'),
+]

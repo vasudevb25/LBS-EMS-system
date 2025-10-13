@@ -41,8 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
+
     # Add any third-party apps here
     'apps.management',
+    'apps.examinations'
 ]
 
 MIDDLEWARE = [
@@ -53,7 +56,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 ROOT_URLCONF = 'lbs_ems.urls'
 
@@ -72,6 +79,17 @@ TEMPLATES = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+
 WSGI_APPLICATION = 'lbs_ems.wsgi.application'
 
 
@@ -83,8 +101,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'LBS-EMS', # Your database name
         'USER': 'postgres',     # Your PostgreSQL user
-        'PASSWORD': 'postgres', # Your PostgreSQL password
-        'HOST': 'my_postgres',     # Or your database host
+        'PASSWORD': 'root', # Your PostgreSQL password
+        'HOST': 'localhost',     # Or your database host
         'PORT': '5432',          # Your PostgreSQL port
     }
 }

@@ -1,7 +1,22 @@
+import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/buttons";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/layout";
 import { Input } from "../components/ui/inputs";
-import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/data";
+import {
+  Badge,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,63 +24,85 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "../components/ui/menus";
-import { 
-  Plus, 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Trash, 
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash,
   MapPin,
   Calendar,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 
-// Mock data for demonstration
-const centres = [
-  {
-    id: "LBS001",
-    name: "Kochi Digital Hub",
-    location: "Kochi",
-    district: "Ernakulam",
-    validFrom: "2023-01-01",
-    validTo: "2025-12-31",
-    status: "Active",
-    courses: 12,
-    students: 234
-  },
-  {
-    id: "LBS002", 
-    name: "Thiruvananthapuram Tech Center",
-    location: "Thiruvananthapuram",
-    district: "Thiruvananthapuram",
-    validFrom: "2023-03-15",
-    validTo: "2025-12-31",
-    status: "Active",
-    courses: 8,
-    students: 156
-  },
-  {
-    id: "LBS003",
-    name: "Calicut Innovation Lab",
-    location: "Calicut",
-    district: "Kozhikode",
-    validFrom: "2023-06-01",
-    validTo: "2024-05-31",
-    status: "Expiring Soon",
-    courses: 6,
-    students: 89
-  },
-];
+const cn = (...classes) => classes.filter(Boolean).join(" ");
+
+// Define the structure of a centre
+interface Centre {
+  centre_id: number;
+  centre_code: string;
+  centre_name: string;
+  location: string;
+  district: string;
+  validity_start_date: string;
+  validity_end_date: string;
+  is_active: boolean;
+  created_at: string;
+  // courses_count?: number; // optional if your API doesn't send it yet
+  // students?: number;      // optional
+}
+interface Stats {
+  total_centres: number;
+  active_centres: number;
+  expiring_soon: number;
+  total_students: number;
+}
 
 const Centres = () => {
+  const [centres, setCentres] = useState<Centre[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch centres
+        const centreRes = await fetch(
+          "http://127.0.0.1:8000/api/centres/?format=json"
+        );
+        if (!centreRes.ok)
+          throw new Error(`Centres API error: ${centreRes.status}`);
+        const centreData = await centreRes.json();
+
+        // Fetch stats
+        const statsRes = await fetch("http://127.0.0.1:8000/api/centre-stats/");
+        if (!statsRes.ok)
+          throw new Error(`Stats API error: ${statsRes.status}`);
+        const statsData = await statsRes.json();
+
+        setCentres(centreData);
+        setStats(statsData);
+      } catch (err: any) {
+        console.error("Failed to fetch data:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div>Loading centres...</div>;
+  if (error) return <div>Error loading centres: {error}</div>;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Centre Management</h1>
-          <p className="text-muted-foreground">
-            Manage affiliated training centres, course allocation, and validity tracking
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Centre Management
+          </h1>
         </div>
         <Button className="bg-gradient-primary hover:bg-primary-glow">
           <Plus className="mr-2 h-4 w-4" />
@@ -82,13 +119,13 @@ const Centres = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
+            <div className="text-2xl font-bold">{stats?.total_centres}</div>
             <p className="text-xs text-muted-foreground">
               Across all districts
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -96,7 +133,9 @@ const Centres = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">42</div>
+            <div className="text-2xl font-bold text-success">
+              {stats?.active_centres}
+            </div>
             <p className="text-xs text-muted-foreground">
               Currently operational
             </p>
@@ -110,10 +149,10 @@ const Centres = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">3</div>
-            <p className="text-xs text-muted-foreground">
-              Within 3 months
-            </p>
+            <div className="text-2xl font-bold text-warning">
+              {stats?.expiring_soon}
+            </div>
+            <p className="text-xs text-muted-foreground">Within 3 months</p>
           </CardContent>
         </Card>
 
@@ -124,7 +163,7 @@ const Centres = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,847</div>
+            <div className="text-2xl font-bold">{stats?.total_students}</div>
             <p className="text-xs text-muted-foreground">
               All centres combined
             </p>
@@ -136,9 +175,6 @@ const Centres = () => {
       <Card>
         <CardHeader>
           <CardTitle>Centre Directory</CardTitle>
-          <CardDescription>
-            View and manage all registered training centres
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-2 mb-4">
@@ -165,12 +201,12 @@ const Centres = () => {
             </TableHeader>
             <TableBody>
               {centres.map((centre) => (
-                <TableRow key={centre.id}>
+                <TableRow key={centre.centre_id}>
                   <TableCell>
                     <div className="space-y-1">
-                      <div className="font-medium">{centre.name}</div>
+                      <div className="font-medium">{centre.centre_name}</div>
                       <div className="text-sm text-muted-foreground">
-                        ID: {centre.id}
+                        ID: {centre.centre_code}
                       </div>
                     </div>
                   </TableCell>
@@ -186,31 +222,26 @@ const Centres = () => {
                   <TableCell>
                     <div className="flex items-center space-x-1 text-sm">
                       <Calendar className="h-3 w-3 text-muted-foreground" />
-                      <span>{centre.validFrom} to {centre.validTo}</span>
+                      <span>
+                        {centre.validity_start_date} to{" "}
+                        {centre.validity_end_date}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center space-x-1">
                         <BookOpen className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm">{centre.courses} courses</span>
+                        <span className="text-sm">{} courses</span>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {centre.students} students
+                        {} students
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        centre.status === "Active" 
-                          ? "default" 
-                          : centre.status === "Expiring Soon"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                    >
-                      {centre.status}
+                    <Badge variant={centre.is_active ? "default" : "secondary"}>
+                      {centre.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                   <TableCell>

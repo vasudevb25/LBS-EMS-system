@@ -9,11 +9,7 @@ class Centre(models.Model):
     validity_start_date = models.DateField()
     validity_end_date = models.DateField()
     is_active = models.BooleanField(default=True)
-    # Audit fields: Use null=True/blank=True if they can be empty in the DB
-    created_by = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_by = models.IntegerField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False  # Tells Django to use the existing table
@@ -30,13 +26,9 @@ class Course(models.Model):
     duration = models.CharField(max_length=50)
     eligibility = models.TextField(null=True, blank=True)
     mou_required = models.BooleanField()
-    syllabus_file_path = models.CharField(max_length=500, null=True, blank=True)
-    content_file_path = models.CharField(max_length=500, null=True, blank=True)
-
-    created_by = models.IntegerField(null=True, blank=True)
+    # syllabus_file_path = models.CharField(max_length=500, null=True, blank=True)
+    # content_file_path = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_by = models.IntegerField(null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False
@@ -44,3 +36,7 @@ class Course(models.Model):
 
     def __str__(self):
         return self.course_name
+    
+
+
+    
