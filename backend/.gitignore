@@ -1,0 +1,87 @@
+# Python junk
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*$py.class
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Django stuff
+db.sqlite3
+media/
+staticfiles/
+*.log
+*.pot
+*.py,cover
+*.mo
+
+# Migrations (optional, but if you’re versioning them, comment this out)
+*/migrations/__pycache__/
+# Uncomment below ONLY if you don't want to track migrations initially
+# */migrations/*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE noise
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.swns
+*.bak
+.DS_Store
+Thumbs.db
+
+# Compiled assets / node modules if you ever add frontend stuff
+node_modules/
+build/
+dist/
+*.map
+
+# Coverage and test files
+.coverage
+htmlcov/
+*.coverage
+*.cover
+*.pyc
+*.pyo
+.cache/
+pytest_cache/
+__pycache__/
+
+# Celery / Redis artifacts
+celerybeat-schedule
+celerybeat.pid
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Backup or export files
+*.csv
+*.xlsx
+*.xls
+*.pdf
+*.docx
+*.zip
+*.tar
+*.gz
+
+# PyInstaller
+*.spec
+build/
+dist/
+
+# Editor history
+*.sublime-workspace
+*.sublime-project
