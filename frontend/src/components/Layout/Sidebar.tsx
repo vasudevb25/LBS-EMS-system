@@ -17,7 +17,7 @@ import { NavLink } from "react-router-dom";
 const navigation = [
   {
     name: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {

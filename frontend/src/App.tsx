@@ -13,7 +13,7 @@ import Examinations from "./pages/Examinations";
 import Notifications from "./pages/Notifications";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
-
+import Form from "./components/Dashboard/Login";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -24,7 +24,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
         <Routes>
-          <Route path="/" element={<AppLayout><Index /></AppLayout>} />
+          <Route path="/" element={<Form />} />
+          <Route path="/dashboard" element={<AppLayout><Index /></AppLayout>} />
           <Route path="/centres" element={<AppLayout><Centres /></AppLayout>} />
           <Route path="/courses" element={<AppLayout><Courses /></AppLayout>} />
           <Route path="/students" element={<AppLayout><Students /></AppLayout>} />
