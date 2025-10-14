@@ -1,9 +1,13 @@
 import type { Config } from "tailwindcss";
 
-export default {
-  darkMode: ["class", '[data-theme="dark"]'],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
-  prefix: "",
+const config: Config = {
+  darkMode: ["class", '[data-theme="dark"]'], // ✅ keeps support for both class and attribute
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   theme: {
     container: {
       center: true,
@@ -73,8 +77,8 @@ export default {
         "gradient-accent": "linear-gradient(135deg, hsl(var(--accent)), hsl(142 69% 60%))",
       },
       boxShadow: {
-        "elegant": "0 4px 6px -1px hsl(var(--primary) / 0.1), 0 2px 4px -1px hsl(var(--primary) / 0.06)",
-        "glow": "0 0 40px hsl(var(--primary-glow) / 0.15)",
+        elegant: "0 4px 6px -1px hsl(var(--primary) / 0.1), 0 2px 4px -1px hsl(var(--primary) / 0.06)",
+        glow: "0 0 40px hsl(var(--primary-glow) / 0.15)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -83,20 +87,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
@@ -107,15 +103,13 @@ export default {
   },
   plugins: [
     require("tailwindcss-animate"),
-    function({ addUtilities }) {
+    function ({ addUtilities }) {
       addUtilities({
-        '.bg-primary-glow': {
-          'background-color': 'hsl(var(--primary-glow))'
-        },
-        '.hover\\:bg-primary-glow:hover': {
-          'background-color': 'hsl(var(--primary-glow))'
-        }
-      })
-    }
+        ".bg-primary-glow": { "background-color": "hsl(var(--primary-glow))" },
+        ".hover\\:bg-primary-glow:hover": { "background-color": "hsl(var(--primary-glow))" },
+      });
+    },
   ],
-} satisfies Config;
+};
+
+export default config;
