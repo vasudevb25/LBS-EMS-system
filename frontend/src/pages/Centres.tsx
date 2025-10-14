@@ -64,6 +64,15 @@ const Centres = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  // Filter centres based on name, location, or ID
+  const filteredCentres = centres.filter(
+    (centre) =>
+      centre.centre_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      centre.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      centre.centre_code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -183,95 +192,101 @@ const Centres = () => {
               <Input
                 placeholder="Search centres by name, location, or ID..."
                 className="pl-8"
+                value={searchQuery} // bind input to state
+                onChange={(e) => setSearchQuery(e.target.value)} // update state
               />
             </div>
             <Button variant="outline">Filter</Button>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Centre Details</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Validity</TableHead>
-                <TableHead>Performance</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[70px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {centres.map((centre) => (
-                <TableRow key={centre.centre_id}>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="font-medium">{centre.centre_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        ID: {centre.centre_code}
+          <div className="max-h-[500px] overflow-y-auto border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Centre Details</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Validity</TableHead>
+                  <TableHead>Performance</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[70px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCentres.map((centre) => (
+                  <TableRow key={centre.centre_id}>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="font-medium">{centre.centre_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          ID: {centre.centre_code}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-sm">{centre.location}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {centre.district} District
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1 text-sm">
-                      <Calendar className="h-3 w-3 text-muted-foreground" />
-                      <span>
-                        {centre.validity_start_date} to{" "}
-                        {centre.validity_end_date}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center space-x-1">
-                        <BookOpen className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm">{} courses</span>
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm">{centre.location}</span>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {} students
+                        {centre.district} District
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={centre.is_active ? "default" : "secondary"}>
-                      {centre.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Centre
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <BookOpen className="mr-2 h-4 w-4" />
-                          Allocate Courses
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash className="mr-2 h-4 w-4" />
-                          Delete Centre
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1 text-sm">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <span>
+                          {centre.validity_start_date} to{" "}
+                          {centre.validity_end_date}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-1">
+                          <BookOpen className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">{/* courses count */}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {/* students count */}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={centre.is_active ? "default" : "secondary"}
+                      >
+                        {centre.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Centre
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <BookOpen className="mr-2 h-4 w-4" />
+                            Allocate Courses
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete Centre
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

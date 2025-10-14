@@ -8,7 +8,7 @@ router.register(r'examinations', ExaminationViewSet, basename='examinations')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('stats/', ExamStatsAPIView.as_view(), name='exam-stats'),
+    path('exam-stats/', ExamStatsAPIView.as_view(), name='exam-stats'),
 ]
 
 

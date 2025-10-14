@@ -58,73 +58,75 @@ interface Stats {
 }
 
 const CourseTable = ({ courses }: { courses: Course[] }) => (
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead>Course Details</TableHead>
-        <TableHead>Duration</TableHead>
-        <TableHead>Eligibility</TableHead>
-        <TableHead>MOU Required</TableHead>
-        <TableHead className="w-[70px]">Actions</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {courses.map((course) => (
-        <TableRow key={course.course_id}>
-          <TableCell>
-            <div className="space-y-1">
-              <div className="font-medium">{course.course_name}</div>
-              <div className="text-sm text-muted-foreground">
-                Code: {course.course_code}
-              </div>
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="space-y-1">
-              <div className="flex items-center space-x-1">
-                <Clock className="h-3 w-3 text-muted-foreground" />
-                <span className="text-sm">{course.duration}</span>
-              </div>
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="text-xs text-muted-foreground">
-              {course.eligibility}
-            </div>
-          </TableCell>
-          <TableCell>
-            <Badge variant={course.mou_required ? "default" : "secondary"}>
-              {course.mou_required ? "Required" : "Not Required"}
-            </Badge>
-          </TableCell>
-          <TableCell>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Course
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Manage Syllabus
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete Course
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TableCell>
+  <div className="max-h-[500px] overflow-y-auto border rounded-lg">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Course Details</TableHead>
+          <TableHead>Duration</TableHead>
+          <TableHead>Eligibility</TableHead>
+          <TableHead>MOU Required</TableHead>
+          <TableHead className="w-[70px]">Actions</TableHead>
         </TableRow>
-      ))}
-    </TableBody>
-  </Table>
+      </TableHeader>
+      <TableBody>
+        {courses.map((course) => (
+          <TableRow key={course.course_id}>
+            <TableCell>
+              <div className="space-y-1">
+                <div className="font-medium">{course.course_name}</div>
+                <div className="text-sm text-muted-foreground">
+                  Code: {course.course_code}
+                </div>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-1">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-sm">{course.duration}</span>
+                </div>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="text-xs text-muted-foreground">
+                {course.eligibility}
+              </div>
+            </TableCell>
+            <TableCell>
+              <Badge variant={course.mou_required ? "default" : "secondary"}>
+                {course.mou_required ? "Required" : "Not Required"}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Course
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Manage Syllabus
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive">
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete Course
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
 );
 
 const Courses = () => {
