@@ -1,37 +1,36 @@
 import styled from "styled-components";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
-const Form = () => {
+const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("Admin");
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Admin"); // default to Admin
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
-      const response = await axios.post("http://localhost:8000/login/", {
-        username: email, // sending email as username
-        password: password,
+      const res = await fetch("http://127.0.0.1:8000/api/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, role }),
       });
 
-      const userRole = response.data.user.user_role;
-      localStorage.setItem("access", response.data.tokens.access);
-      localStorage.setItem("refresh", response.data.tokens.refresh);
-      localStorage.setItem("user_role", userRole);
+      const data = await res.json();
 
-      // Navigate based on role
-      if (userRole === "Admin") {
-        navigate("/admin-dashboard");
-      } else {
-        navigate("/centre-dashboard");
+      if (res.ok) {
+        localStorage.setItem("user_role", data.role);
+        localStorage.setItem("username", username);
+
+        if (data.role === "Admin") navigate("/admin/dashboard");
+        else if (data.role === "Centre") navigate("/centre/dashboard");
+        else navigate("/dashboard");
       }
-    } catch (error) {
-      console.error(error);
-      alert("Login failed! Please check your credentials.");
+    } catch (err) {
+      console.error(err);
+      alert("Login failed. Check console for details.");
     }
   };
 
@@ -39,16 +38,16 @@ const Form = () => {
     <StyledWrapper>
       <div className="container">
         <div className="heading">Sign In</div>
-        <form className="form" onSubmit={handleSubmit}>
+        <form className="form" onSubmit={handleLogin}>
           <input
-            placeholder="E-mail"
-            id="email"
-            name="email"
-            type="email"
+            placeholder="Username"
+            id="username"
+            name="username"
+            type="text"
             className="input"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
           />
           <input
             placeholder="Password"
@@ -179,4 +178,4 @@ const StyledWrapper = styled.div`
   }
 `;
 
-export default Form;
+export default Login;

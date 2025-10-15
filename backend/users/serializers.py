@@ -1,0 +1,7 @@
+# accounts/serializers.py
+from rest_framework import serializers
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+    role = serializers.ChoiceField(choices=['Admin', 'Centre'])

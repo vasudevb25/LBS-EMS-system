@@ -1,4 +1,4 @@
-import { Button } from "../components/ui/buttons";
+import { Button } from "../../components/ui/buttons";
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -6,8 +6,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/layout";
-import { Input } from "../components/ui/inputs";
+} from "../../components/ui/layout";
+import { Input } from "../../components/ui/inputs";
 import {
   Table,
   TableBody,
@@ -15,14 +15,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../components/ui/data";
+} from "../../components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../components/ui/menus";
+} from "../../components/ui/menus";
 import {
   Search,
   MoreHorizontal,
@@ -56,7 +56,6 @@ const StudentTable = ({ students }: { students: Student[] }) => (
           <TableHead>Centre</TableHead>
           <TableHead>Phone</TableHead>
           <TableHead>Registration Date</TableHead>
-          <TableHead className="w-[70px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -80,27 +79,6 @@ const StudentTable = ({ students }: { students: Student[] }) => (
             <TableCell>
               {new Date(student.registration_date).toLocaleDateString()}
             </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem>
-                    <Eye className="mr-2 h-4 w-4" /> View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Edit className="mr-2 h-4 w-4" /> Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Download className="mr-2 h-4 w-4" /> Download Docs
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -108,7 +86,7 @@ const StudentTable = ({ students }: { students: Student[] }) => (
   </div>
 );
 
-const Students = () => {
+const AdminStudents = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -154,16 +132,6 @@ const Students = () => {
             View and manage registered student information
           </p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export Data
-          </Button>
-          <Button className="bg-gradient-accent hover:bg-accent">
-            <UserCheck className="mr-2 h-4 w-4" />
-            Add New Student
-          </Button>
-        </div>
       </div>
 
       <Card>
@@ -202,4 +170,4 @@ const Students = () => {
   );
 };
 
-export default Students;
+export default AdminStudents;

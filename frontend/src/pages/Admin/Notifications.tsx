@@ -1,16 +1,33 @@
-import { Button } from "../components/ui/buttons";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/layout";
-import { Input, Textarea, Switch, Label } from "../components/ui/inputs";
-import { Badge, Tabs, TabsContent, TabsList, TabsTrigger, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/data";
-import { 
+import { Button } from "../../components/ui/buttons";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/layout";
+import { Input, Textarea, Switch, Label } from "../../components/ui/inputs";
+import {
+  Badge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/data";
+import {
   Bell,
-  Send, 
-  Mail, 
+  Send,
+  Mail,
   MessageSquare,
   Clock,
   CheckCircle,
   AlertCircle,
-  Users
+  Users,
 } from "lucide-react";
 
 // Mock data for recent notifications
@@ -23,7 +40,7 @@ const recentNotifications = [
     channels: ["Email", "SMS"],
     recipients: 89,
     status: "Sent",
-    sentAt: "2024-01-15 10:30 AM"
+    sentAt: "2024-01-15 10:30 AM",
   },
   {
     id: 2,
@@ -33,18 +50,19 @@ const recentNotifications = [
     channels: ["SMS"],
     recipients: 145,
     status: "Sent",
-    sentAt: "2024-01-15 09:15 AM"
+    sentAt: "2024-01-15 09:15 AM",
   },
   {
     id: 3,
     title: "New Course Announcement",
-    message: "Machine Learning certification course now available for registration",
+    message:
+      "Machine Learning certification course now available for registration",
     type: "announcement",
     channels: ["Email"],
     recipients: 2847,
     status: "Scheduled",
-    sentAt: "2024-01-16 02:00 PM"
-  }
+    sentAt: "2024-01-16 02:00 PM",
+  },
 ];
 
 const Notifications = () => {
@@ -52,7 +70,9 @@ const Notifications = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Notification Center</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Notification Center
+          </h1>
           <p className="text-muted-foreground">
             Send announcements, reminders, and alerts via email and SMS
           </p>
@@ -74,12 +94,10 @@ const Notifications = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,247</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
+            <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -89,9 +107,7 @@ const Notifications = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">856</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
+            <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
 
@@ -104,9 +120,7 @@ const Notifications = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent">391</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
+            <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
 
@@ -119,9 +133,7 @@ const Notifications = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-warning">5</div>
-            <p className="text-xs text-muted-foreground">
-              Pending delivery
-            </p>
+            <p className="text-xs text-muted-foreground">Pending delivery</p>
           </CardContent>
         </Card>
       </div>
@@ -153,8 +165,12 @@ const Notifications = () => {
                     <SelectContent>
                       <SelectItem value="all-students">All Students</SelectItem>
                       <SelectItem value="all-centres">All Centres</SelectItem>
-                      <SelectItem value="course-specific">Course Specific</SelectItem>
-                      <SelectItem value="centre-specific">Centre Specific</SelectItem>
+                      <SelectItem value="course-specific">
+                        Course Specific
+                      </SelectItem>
+                      <SelectItem value="centre-specific">
+                        Centre Specific
+                      </SelectItem>
                       <SelectItem value="custom">Custom Group</SelectItem>
                     </SelectContent>
                   </Select>
@@ -179,15 +195,12 @@ const Notifications = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
-                <Input 
-                  id="title"
-                  placeholder="Enter notification title"
-                />
+                <Input id="title" placeholder="Enter notification title" />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="message">Message</Label>
-                <Textarea 
+                <Textarea
                   id="message"
                   placeholder="Enter your message here..."
                   rows={4}
@@ -244,7 +257,10 @@ const Notifications = () => {
             <CardContent>
               <div className="space-y-4">
                 {recentNotifications.map((notification) => (
-                  <div key={notification.id} className="border rounded-lg p-4 space-y-3">
+                  <div
+                    key={notification.id}
+                    className="border rounded-lg p-4 space-y-3"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <h4 className="font-medium">{notification.title}</h4>
@@ -252,13 +268,17 @@ const Notifications = () => {
                           {notification.message}
                         </p>
                       </div>
-                      <Badge 
-                        variant={notification.status === "Sent" ? "default" : "secondary"}
+                      <Badge
+                        variant={
+                          notification.status === "Sent"
+                            ? "default"
+                            : "secondary"
+                        }
                       >
                         {notification.status}
                       </Badge>
                     </div>
-                    
+
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-1">
@@ -266,7 +286,9 @@ const Notifications = () => {
                           <span>{notification.recipients} recipients</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <span>Channels: {notification.channels.join(", ")}</span>
+                          <span>
+                            Channels: {notification.channels.join(", ")}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-1">
@@ -292,7 +314,9 @@ const Notifications = () => {
             <CardContent>
               <div className="text-center py-12">
                 <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Template Management</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Template Management
+                </h3>
                 <p className="text-muted-foreground mb-4">
                   Create and manage reusable notification templates
                 </p>
@@ -313,7 +337,9 @@ const Notifications = () => {
             <CardContent>
               <div className="text-center py-12">
                 <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Notification Configuration</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Notification Configuration
+                </h3>
                 <p className="text-muted-foreground mb-4">
                   Set up email and SMS gateway configurations
                 </p>

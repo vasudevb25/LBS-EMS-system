@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../components/ui/buttons";
+import { Button } from "../../components/ui/buttons";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/layout";
-import { Input } from "../components/ui/inputs";
+} from "../../components/ui/layout";
+import { Input } from "../../components/ui/inputs";
 import {
   Badge,
   Table,
@@ -16,14 +16,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../components/ui/data";
+} from "../../components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../components/ui/menus";
+} from "../../components/ui/menus";
 import {
   Plus,
   Search,
@@ -35,7 +35,7 @@ import {
   BookOpen,
 } from "lucide-react";
 
-const cn = (...classes) => classes.filter(Boolean).join(" ");
+const cn = (...classes: any[]) => classes.filter(Boolean).join(" ");
 
 // Define the structure of a centre
 interface Centre {
@@ -58,14 +58,16 @@ interface Stats {
   total_students: number;
 }
 
-const Centres = () => {
+const AdminCentres = () => {
   const [centres, setCentres] = useState<Centre[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [searchQuery, setSearchQuery] = useState("");
-  // Filter centres based on name, location, or ID
+  const [studentStats, setStudentStats] = useState<{
+    total_students: number;
+  } | null>(null);
+
   const filteredCentres = centres.filter(
     (centre) =>
       centre.centre_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,6 +92,16 @@ const Centres = () => {
           throw new Error(`Stats API error: ${statsRes.status}`);
         const statsData = await statsRes.json();
 
+        // Fetch students
+        const studentsRes = await fetch("http://127.0.0.1:8000/api/students/");
+        if (!studentsRes.ok)
+          throw new Error(`Students API error: ${studentsRes.status}`);
+        const studentsData = await studentsRes.json();
+
+        // Count total students
+        setStudentStats({ total_students: studentsData.length });
+
+        // Update state
         setCentres(centreData);
         setStats(statsData);
       } catch (err: any) {
@@ -172,7 +184,9 @@ const Centres = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.total_students}</div>
+            <div className="text-2xl font-bold">
+              {studentStats?.total_students ?? "N/A"}
+            </div>
             <p className="text-xs text-muted-foreground">
               All centres combined
             </p>
@@ -293,4 +307,4 @@ const Centres = () => {
   );
 };
 
-export default Centres;
+export default AdminCentres;

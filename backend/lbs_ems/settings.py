@@ -30,6 +30,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = "users.User"
+
 
 # Application definition
 
@@ -46,7 +48,8 @@ INSTALLED_APPS = [
     # Add any third-party apps here
     'apps.management',
     'apps.examinations',
-    'apps.students'
+    'apps.students',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -90,7 +93,9 @@ TEMPLATES = [
 #     ),
 # }
 
-
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 WSGI_APPLICATION = 'lbs_ems.wsgi.application'
 
 

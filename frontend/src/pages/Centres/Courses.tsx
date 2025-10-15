@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Button } from "../components/ui/buttons";
+import { Button } from "../../components/ui/buttons";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/layout";
-import { Input } from "../components/ui/inputs";
+} from "../../components/ui/layout";
+import { Input } from "../../components/ui/inputs";
 import {
   Badge,
   Tabs,
@@ -20,14 +20,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../components/ui/data";
+} from "../../components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../components/ui/menus";
+} from "../../components/ui/menus";
 import {
   Plus,
   Search,
@@ -129,7 +129,7 @@ const CourseTable = ({ courses }: { courses: Course[] }) => (
   </div>
 );
 
-const Courses = () => {
+const CentreCourses = () => {
   const [careerCourses, setCareerCourses] = useState<Course[]>([]);
   const [certificateCourses, setCertificateCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -258,4 +258,4 @@ const Courses = () => {
   );
 };
 
-export default Courses;
+export default CentreCourses;
