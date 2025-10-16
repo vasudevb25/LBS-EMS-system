@@ -19,6 +19,7 @@ const navigationCentre = [
     href: "/centre/examinations",
     icon: ClipboardCheck,
   },
+  { name: "Notifications", href: "/centre/notification", icon: Users },
 ];
 
 export function SidebarCentre() {

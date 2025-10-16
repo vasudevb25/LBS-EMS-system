@@ -1,3 +1,4 @@
+// admin/Notifications.tsx
 import { useEffect, useState } from "react";
 import { Button } from "../../components/ui/buttons";
 import {
@@ -9,63 +10,52 @@ import {
 } from "../../components/ui/layout";
 import { Input, Textarea, Label } from "../../components/ui/inputs";
 import {
-  Badge,
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/data";
-import { Send, Users, Clock } from "lucide-react";
-
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  status: string;
-  recipients: number;
-  channels: string[];
-  sentAt: string;
-}
+import { Send } from "lucide-react";
 
 interface Centre {
   centre_id: number;
   centre_name: string;
 }
 
-const Notifications: React.FC = () => {
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [recipientType, setRecipientType] = useState("all_students");
-  const [CentreId, setCentreId] = useState<number | null>(null);
+const Notifications = () => {
+  const [title, setTitle] = useState(""); // notification title
+  const [message, setMessage] = useState(""); // notification message
+  const [recipientType, setRecipientType] = useState("all_centres"); // all or specific
+  const [selectedCentreId, setSelectedCentreId] = useState<number | null>(null);
   const [centres, setCentres] = useState<Centre[]>([]);
-  const [recentNotifications, setRecentNotifications] = useState<
-    Notification[]
-  >([]);
 
   // Fetch all centres on load
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/centres/")
       .then((res) => res.json())
       .then((data) => setCentres(data))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error("Error fetching centres:", err));
   }, []);
 
+  // Send Notification
   const sendNotification = async () => {
-    try {
-      const payload: any = {
-        title,
-        message,
-        recipients_type: recipientType,
-      };
-      if (recipientType === "centre_specific" && CentreId) {
-        payload.course_id = CentreId;
-      }
+    if (!title || !message) {
+      alert("Please fill in all fields.");
+      return;
+    }
 
+    const payload = {
+      recipient: recipientType,
+      subject: title,
+      message,
+      target_centre:
+        recipientType === "centre_specific" ? selectedCentreId : null,
+    };
+
+    try {
       const res = await fetch("http://127.0.0.1:8000/api/notifications/send/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,29 +65,16 @@ const Notifications: React.FC = () => {
       const data = await res.json();
       alert(data.status || "Notification sent successfully!");
 
-      // Optionally, refresh notification history
-      // fetchRecentNotifications();
+      // Reset form
+      setTitle("");
+      setMessage("");
+      setSelectedCentreId(null);
+      setRecipientType("all_centres");
     } catch (err) {
-      console.error(err);
+      console.error("Failed to send notification:", err);
       alert("Failed to send notification");
     }
   };
-
-  // const fetchRecentNotifications = async () => {
-  //   try {
-  //     const res = await fetch(
-  //       "http://127.0.0.1:8000/api/notifications/history/"
-  //     );
-  //     const data = await res.json();
-  //     setRecentNotifications(data);
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
-
-  useEffect(() => {
-    // fetchRecentNotifications();
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -107,22 +84,23 @@ const Notifications: React.FC = () => {
             Notification Center
           </h1>
           <p className="text-muted-foreground">
-            Send announcements, reminders, and alerts via email
+            Send announcements, reminders, and alerts to centres
           </p>
         </div>
       </div>
 
       <Tabs defaultValue="compose" className="space-y-4">
-        {/* Compose Tab */}
         <TabsContent value="compose" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Compose Notification</CardTitle>
               <CardDescription>
-                Send notifications to students, centres, or specific groups
+                Send notifications to all centres or a specific centre
               </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-4">
+              {/* Recipient Selection */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="recipients">Recipients</Label>
@@ -134,7 +112,6 @@ const Notifications: React.FC = () => {
                       <SelectValue placeholder="Select recipient group" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all_students">All Students</SelectItem>
                       <SelectItem value="all_centres">All Centres</SelectItem>
                       <SelectItem value="centre_specific">
                         Centre Specific
@@ -145,15 +122,15 @@ const Notifications: React.FC = () => {
 
                 {recipientType === "centre_specific" && (
                   <div className="space-y-2">
-                    <Label htmlFor="course-centre">Select Centre</Label>
+                    <Label htmlFor="centre">Select Centre</Label>
                     <Select
-                      value={courseCentreId?.toString() || ""}
+                      value={selectedCentreId?.toString() || ""}
                       onValueChange={(value) =>
-                        setCourseCentreId(parseInt(value))
+                        setSelectedCentreId(parseInt(value))
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select centre" />
+                        <SelectValue placeholder="Select Centre" />
                       </SelectTrigger>
                       <SelectContent>
                         {centres.map((centre) => (
@@ -170,16 +147,18 @@ const Notifications: React.FC = () => {
                 )}
               </div>
 
+              {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter subject title"
+                  placeholder="Enter notification title"
                 />
               </div>
 
+              {/* Message */}
               <div className="space-y-2">
                 <Label htmlFor="message">Message</Label>
                 <Textarea
@@ -191,6 +170,7 @@ const Notifications: React.FC = () => {
                 />
               </div>
 
+              {/* Send Button */}
               <div className="flex space-x-2">
                 <Button
                   className="bg-gradient-primary hover:bg-primary-glow"

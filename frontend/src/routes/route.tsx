@@ -19,6 +19,7 @@ import CentreCentres from "../pages/Centres/Centres";
 import CentreCourses from "../pages/Centres/Courses";
 import CentreStudents from "../pages/Centres/Students";
 import CentreExaminations from "../pages/Centres/Examinations";
+import CentreNotifications from "../pages/Centres/Notifications";
 
 // Shared dashboard
 import Index from "../pages/Index";
@@ -81,6 +82,7 @@ export const routes: RouteObject[] = [
       { path: "courses", element: <CentreCourses /> },
       { path: "students", element: <CentreStudents /> },
       { path: "examinations", element: <CentreExaminations /> },
+      { path: "notification", element: <CentreNotifications /> },
       { path: "", element: <Navigate to="dashboard" replace /> },
     ],
   },

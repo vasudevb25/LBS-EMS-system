@@ -48,8 +48,7 @@ interface Centre {
   validity_end_date: string;
   is_active: boolean;
   created_at: string;
-  // courses_count?: number; // optional if your API doesn't send it yet
-  // students?: number;      // optional
+  email?: string;
 }
 interface Stats {
   total_centres: number;
@@ -67,6 +66,9 @@ const AdminCentres = () => {
   const [studentStats, setStudentStats] = useState<{
     total_students: number;
   } | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCentre, setEditingCentre] = useState<Centre | null>(null);
+  const [formData, setFormData] = useState<Partial<Centre>>({});
 
   const filteredCentres = centres.filter(
     (centre) =>
@@ -75,44 +77,99 @@ const AdminCentres = () => {
       centre.centre_code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [centreRes, statsRes] = await Promise.all([
+        fetch("http://127.0.0.1:8000/api/centres/?format=json"),
+        fetch("http://127.0.0.1:8000/api/centre-stats/"),
+      ]);
+      if (!centreRes.ok)
+        throw new Error(`Centres API error: ${centreRes.status}`);
+      if (!statsRes.ok) throw new Error(`Stats API error: ${statsRes.status}`);
+
+      // Fetch students separately
+      const studentsRes = await fetch("http://127.0.0.1:8000/api/students/");
+      if (!studentsRes.ok)
+        throw new Error(`Students API error: ${studentsRes.status}`);
+      const studentsData = await studentsRes.json();
+
+      // Count total students
+      setStudentStats({ total_students: studentsData.length });
+
+      const [centreData, statsData] = await Promise.all([
+        centreRes.json(),
+        statsRes.json(),
+      ]);
+      setCentres(centreData);
+      setStats(statsData);
+    } catch (err: any) {
+      console.error("Failed to fetch data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch centres
-        const centreRes = await fetch(
-          "http://127.0.0.1:8000/api/centres/?format=json"
-        );
-        if (!centreRes.ok)
-          throw new Error(`Centres API error: ${centreRes.status}`);
-        const centreData = await centreRes.json();
-
-        // Fetch stats
-        const statsRes = await fetch("http://127.0.0.1:8000/api/centre-stats/");
-        if (!statsRes.ok)
-          throw new Error(`Stats API error: ${statsRes.status}`);
-        const statsData = await statsRes.json();
-
-        // Fetch students
-        const studentsRes = await fetch("http://127.0.0.1:8000/api/students/");
-        if (!studentsRes.ok)
-          throw new Error(`Students API error: ${studentsRes.status}`);
-        const studentsData = await studentsRes.json();
-
-        // Count total students
-        setStudentStats({ total_students: studentsData.length });
-
-        // Update state
-        setCentres(centreData);
-        setStats(statsData);
-      } catch (err: any) {
-        console.error("Failed to fetch data:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
+
+  const openAddModal = () => {
+    setEditingCentre(null);
+    setFormData({});
+    setModalOpen(true);
+  };
+
+  const openEditModal = (centre: Centre) => {
+    setEditingCentre(centre);
+    setFormData({ ...centre });
+    setModalOpen(true);
+  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+  const submitCentre = async () => {
+    try {
+      const method = editingCentre ? "PUT" : "POST";
+      const url = editingCentre
+        ? `http://127.0.0.1:8000/api/centres/${editingCentre.centre_id}/`
+        : "http://127.0.0.1:8000/api/centres/";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) throw new Error("Failed to save centre");
+      fetchData();
+      setModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save centre");
+    }
+  };
+  const deleteCentre = async (centre_id: number) => {
+    if (!confirm("Are you sure you want to delete this centre?")) return;
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/centres/${centre_id}/`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!res.ok) throw new Error("Failed to delete centre");
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete centre");
+    }
+  };
 
   if (loading) return <div>Loading centres...</div>;
   if (error) return <div>Error loading centres: {error}</div>;
@@ -120,12 +177,11 @@ const AdminCentres = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Centre Management
-          </h1>
-        </div>
-        <Button className="bg-gradient-primary hover:bg-primary-glow">
+        <h1 className="text-3xl font-bold tracking-tight">Centre Management</h1>
+        <Button
+          className="bg-gradient-primary hover:bg-primary-glow"
+          onClick={openAddModal}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add Centre
         </Button>
@@ -206,11 +262,10 @@ const AdminCentres = () => {
               <Input
                 placeholder="Search centres by name, location, or ID..."
                 className="pl-8"
-                value={searchQuery} // bind input to state
-                onChange={(e) => setSearchQuery(e.target.value)} // update state
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="outline">Filter</Button>
           </div>
 
           <div className="max-h-[500px] overflow-y-auto border rounded-lg">
@@ -220,7 +275,6 @@ const AdminCentres = () => {
                   <TableHead>Centre Details</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Validity</TableHead>
-                  <TableHead>Performance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[70px]">Actions</TableHead>
                 </TableRow>
@@ -255,17 +309,6 @@ const AdminCentres = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-1">
-                          <BookOpen className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm">{/* courses count */}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {/* students count */}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <Badge
                         variant={centre.is_active ? "default" : "secondary"}
                       >
@@ -281,17 +324,16 @@ const AdminCentres = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Centre
+                          <DropdownMenuItem
+                            onClick={() => openEditModal(centre)}
+                          >
+                            <Edit className="mr-2 h-4 w-4" /> Edit Centre
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <BookOpen className="mr-2 h-4 w-4" />
-                            Allocate Courses
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash className="mr-2 h-4 w-4" />
-                            Delete Centre
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => deleteCentre(centre.centre_id)}
+                          >
+                            <Trash className="mr-2 h-4 w-4" /> Delete Centre
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -303,6 +345,58 @@ const AdminCentres = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add/Edit Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h2 className="text-xl font-bold mb-4">
+              {editingCentre ? "Edit Centre" : "Add Centre"}
+            </h2>
+            <Input
+              name="centre_code"
+              placeholder="Centre Code"
+              value={formData.centre_code || ""}
+              onChange={handleChange}
+              className="mb-2"
+            />
+            <Input
+              name="centre_name"
+              placeholder="Centre Name"
+              value={formData.centre_name || ""}
+              onChange={handleChange}
+              className="mb-2"
+            />
+            <Input
+              name="location"
+              placeholder="Location"
+              value={formData.location || ""}
+              onChange={handleChange}
+              className="mb-2"
+            />
+            <Input
+              name="district"
+              placeholder="District"
+              value={formData.district || ""}
+              onChange={handleChange}
+              className="mb-2"
+            />
+            <Input
+              name="email"
+              placeholder="Email"
+              value={formData.email || ""}
+              onChange={handleChange}
+              className="mb-2"
+            />
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button onClick={() => setModalOpen(false)}>Cancel</Button>
+              <Button onClick={submitCentre} className="bg-blue-600 text-white">
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
