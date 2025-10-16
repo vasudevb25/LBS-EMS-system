@@ -28,7 +28,6 @@ import {
   GraduationCap,
 } from "lucide-react";
 
-// Define types
 interface Centre {
   centre_id: number;
   centre_name: string;
@@ -54,7 +53,10 @@ const AdminReports = () => {
   const [studentStats, setStudentStats] = useState<StudentStats | null>(null);
   const [examTotal, setExamTotal] = useState<number>(0);
   const [centreStats, setCentreStats] = useState<CentreStats | null>(null);
-  const [reportType, setReportType] = useState<string | null>(null); // FIXED: moved here
+  const [reportType, setReportType] = useState<string | null>(null);
+  const [selectedCentre, setSelectedCentre] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,11 +74,8 @@ const AdminReports = () => {
           fetch("http://127.0.0.1:8000/api/exam-stats/"),
           fetch("http://127.0.0.1:8000/api/std-stats/"),
           fetch("http://127.0.0.1:8000/api/courses/"),
-          fetch("http://127.0.0.1:8000/api/centres/"), // dropdown data
+          fetch("http://127.0.0.1:8000/api/centres/"),
         ]);
-
-        if (!studentsRes.ok)
-          throw new Error(`Students API error: ${studentsRes.status}`);
 
         const studentsData = await studentsRes.json();
         const centresStatsData = await centresStatsRes.json();
@@ -94,6 +93,10 @@ const AdminReports = () => {
           students_joined_last_month:
             stdStatsData.students_joined_last_month ?? 0,
         });
+
+        // ✅ Reset selections to avoid sending invalid IDs
+        setSelectedCentre(null);
+        setSelectedCourse(null);
       } catch (error) {
         console.error("Error fetching report data:", error);
       }
@@ -102,40 +105,117 @@ const AdminReports = () => {
     fetchData();
   }, []);
 
-  const reportStats: {
-    title: string;
-    value: number;
-    icon: any;
-    description: string;
-    change?: string;
-  }[] = [
+  // ✅ Convert JSON to CSV
+  const convertToCSV = (data: any[]) => {
+    if (!data.length) return "";
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.join(","),
+      ...data.map((row) =>
+        headers.map((field) => JSON.stringify(row[field] ?? "")).join(",")
+      ),
+    ];
+    return csvRows.join("\n");
+  };
+
+  // ✅ Trigger file download
+  const downloadCSV = (csv: string, filename: string) => {
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      let url = "http://127.0.0.1:8000/api/students/";
+
+      if (reportType === "centre" && selectedCentre) {
+        // ✅ Only send valid centre IDs
+        const validCentre = centres.find(
+          (c) => String(c.centre_id) === selectedCentre
+        );
+        if (!validCentre) {
+          alert(
+            "Selected Centre does not exist. Please select a valid Centre."
+          );
+          return;
+        }
+        url += `?centre_id=${selectedCentre}`;
+      } else if (reportType === "course" && selectedCourse) {
+        // ✅ Only send valid course IDs
+        const validCourse = courses.find(
+          (c) => String(c.course_id) === selectedCourse
+        );
+        if (!validCourse) {
+          alert(
+            "Selected Course does not exist. Please select a valid Course."
+          );
+          return;
+        }
+        url += `?course_id=${selectedCourse}`;
+      }
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch report data");
+
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        alert("No students found for this selection.");
+        return;
+      }
+
+      const csv = convertToCSV(data);
+
+      let filename = "student_report_all.csv";
+      if (reportType === "centre" && selectedCentre) {
+        const centreName =
+          centres.find((c) => String(c.centre_id) === selectedCentre)
+            ?.centre_name ?? "unknown_centre";
+        filename = `student_report_${centreName.replace(/\s+/g, "_")}.csv`;
+      } else if (reportType === "course" && selectedCourse) {
+        const courseName =
+          courses.find((c) => String(c.course_id) === selectedCourse)
+            ?.course_name ?? "unknown_course";
+        filename = `student_report_${courseName.replace(/\s+/g, "_")}.csv`;
+      }
+
+      downloadCSV(csv, filename);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      alert("Failed to generate report. Check console for details.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const reportStats = [
     {
       title: "Total Students",
       value: studentStats?.total_students ?? 0,
       icon: Users,
       description: "Currently enrolled across all centres",
-      change: undefined,
     },
     {
       title: "New Students (Last Month)",
       value: studentStats?.students_joined_last_month ?? 0,
       icon: TrendingUp,
       description: "Registrations compared to previous month",
-      change: undefined,
     },
     {
       title: "Total Centres",
       value: centreStats?.total_centres ?? 0,
       icon: BarChart3,
       description: "Active learning centres",
-      change: undefined,
     },
     {
       title: "Total Exams Conducted",
       value: examTotal,
       icon: GraduationCap,
       description: "Exams conducted till date",
-      change: undefined,
     },
   ];
 
@@ -152,18 +232,18 @@ const AdminReports = () => {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">
-            <Calendar className="mr-2 h-4 w-4" />
-            Schedule Report
-          </Button>
-          <Button className="bg-gradient-primary hover:bg-primary-glow">
+          {/* <Button
+            className="bg-gradient-primary hover:bg-primary-glow"
+            onClick={handleGenerateReport}
+            disabled={isLoading}
+          >
             <FileText className="mr-2 h-4 w-4" />
-            Generate Report
-          </Button>
+            {isLoading ? "Generating..." : "Generate Student Report"}
+          </Button> */}
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         {reportStats.map((stat, index) => (
           <Card key={index}>
@@ -175,20 +255,15 @@ const AdminReports = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {stat.description}
-                </p>
-                <span className="text-xs font-medium text-success">
-                  {stat.change}
-                </span>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                {stat.description}
+              </p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Tabs Section */}
+      {/* Tabs */}
       <Tabs defaultValue="generate" className="space-y-4">
         <TabsList>
           <TabsTrigger value="generate">Generate Reports</TabsTrigger>
@@ -196,7 +271,6 @@ const AdminReports = () => {
 
         <TabsContent value="generate" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Student Reports */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -209,7 +283,6 @@ const AdminReports = () => {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                {/* Report Type Selector */}
                 <Select onValueChange={(value) => setReportType(value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Type" />
@@ -220,48 +293,54 @@ const AdminReports = () => {
                   </SelectContent>
                 </Select>
 
-                {/* Conditional dropdowns */}
-                <div className="grid gap-2 grid-cols-1">
-                  {reportType === "centre" && (
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Centre" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {centres.map((c) => (
-                          <SelectItem
-                            key={c.centre_id}
-                            value={String(c.centre_id)}
-                          >
-                            {c.centre_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                {reportType === "centre" && (
+                  <Select onValueChange={(value) => setSelectedCentre(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Centre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {centres.map((c) => (
+                        <SelectItem
+                          key={c.centre_id} // must match the id
+                          value={String(c.centre_id)} // send ID as string to backend
+                        >
+                          {c.centre_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
-                  {reportType === "course" && (
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Course" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {courses.map((course) => (
-                          <SelectItem
-                            key={course.course_id}
-                            value={String(course.course_name)}
-                          >
-                            {course.course_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
+                {reportType === "course" && (
+                  <Select onValueChange={(value) => setSelectedCourse(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courses.map((course) => (
+                        <SelectItem
+                          key={course.course_id} // use ID
+                          value={String(course.course_id)} // use ID as string
+                        >
+                          {course.course_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
-                <Button className="w-full">
+                <Button
+                  className="w-full"
+                  onClick={handleGenerateReport}
+                  disabled={
+                    isLoading ||
+                    !reportType || // no type selected
+                    (reportType === "centre" && !selectedCentre) || // centre selected but no centre chosen
+                    (reportType === "course" && !selectedCourse) // course selected but no course chosen
+                  }
+                >
                   <Download className="mr-2 h-4 w-4" />
-                  Generate Student Report
+                  {isLoading ? "Generating..." : "Generate Student Report"}
                 </Button>
               </CardContent>
             </Card>

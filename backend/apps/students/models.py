@@ -41,8 +41,8 @@ class Course(models.Model):
 class Student(models.Model):
     student_id = models.AutoField(primary_key=True)
     temporary_student_id = models.CharField(max_length=50, unique=True, blank=True, null=True)
-    centre = models.ForeignKey(Centre, on_delete=models.DO_NOTHING, db_column='centre_id')
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, db_column='course_id')
+    centre_id = models.ForeignKey(Centre, on_delete=models.DO_NOTHING, db_column='centre_id')
+    course_id = models.ForeignKey(Course, on_delete=models.DO_NOTHING, db_column='course_id')
     registration_date = models.DateTimeField(blank=True, null=True)
     first_name = models.CharField(max_length=100)
     middle_name = models.CharField(max_length=100, blank=True, null=True)

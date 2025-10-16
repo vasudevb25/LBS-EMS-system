@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'apps.management',
     'apps.examinations',
     'apps.students',
-    'users'
+    'apps.notifications',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -113,6 +114,17 @@ DATABASES = {
     }
 }
 
+# settings.py
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "vasudevbinu25@gmail.com"  # Gmail address
+EMAIL_HOST_PASSWORD = "vrdb cknn ptvq wejy"  # Gmail App Password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -167,3 +179,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'), # Project-level static files
 ]
+
+
+
