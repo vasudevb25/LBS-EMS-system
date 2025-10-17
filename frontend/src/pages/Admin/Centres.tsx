@@ -7,6 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/layout";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../components/ui/overlays";
+
 import { Input } from "../../components/ui/inputs";
 import {
   Badge,
@@ -178,13 +186,33 @@ const AdminCentres = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Centre Management</h1>
-        <Button
-          className="bg-gradient-primary hover:bg-primary-glow"
-          onClick={openAddModal}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Centre
-        </Button>
+
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-primary hover:bg-primary-glow">
+              <Plus className="mr-2 h-4 w-4" /> Add Centre
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCentre ? "Edit Centre" : "Add New Centre"}
+              </DialogTitle>
+            </DialogHeader>
+
+            {/* Your form here */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitCentre();
+              }}
+              className="space-y-4 mt-2"
+            >
+              {/* Form inputs */}
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Cards */}
@@ -347,56 +375,101 @@ const AdminCentres = () => {
       </Card>
 
       {/* Add/Edit Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-xl font-bold mb-4">
-              {editingCentre ? "Edit Centre" : "Add Centre"}
-            </h2>
-            <Input
-              name="centre_code"
-              placeholder="Centre Code"
-              value={formData.centre_code || ""}
-              onChange={handleChange}
-              className="mb-2"
-            />
-            <Input
-              name="centre_name"
-              placeholder="Centre Name"
-              value={formData.centre_name || ""}
-              onChange={handleChange}
-              className="mb-2"
-            />
-            <Input
-              name="location"
-              placeholder="Location"
-              value={formData.location || ""}
-              onChange={handleChange}
-              className="mb-2"
-            />
-            <Input
-              name="district"
-              placeholder="District"
-              value={formData.district || ""}
-              onChange={handleChange}
-              className="mb-2"
-            />
-            <Input
-              name="email"
-              placeholder="Email"
-              value={formData.email || ""}
-              onChange={handleChange}
-              className="mb-2"
-            />
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button onClick={submitCentre} className="bg-blue-600 text-white">
-                Save
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCentre ? "Edit Centre" : "Add New Centre"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitCentre();
+            }}
+            className="space-y-4 mt-2"
+          >
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Centre Code
+              </label>
+              <Input
+                name="centre_code"
+                value={formData.centre_code || ""}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Centre Name
+              </label>
+              <Input
+                name="centre_name"
+                value={formData.centre_name || ""}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Location</label>
+              <Input
+                name="location"
+                value={formData.location || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">District</label>
+              <Input
+                name="district"
+                value={formData.district || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <Input
+                name="email"
+                type="email"
+                value={formData.email || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="is_active"
+                checked={formData.is_active ?? true}
+                onChange={handleChange}
+              />
+              <label className="text-sm">Active</label>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-gradient-primary hover:bg-primary-glow"
+              >
+                {editingCentre ? "Update Centre" : "Save Centre"}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

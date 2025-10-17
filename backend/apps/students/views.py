@@ -6,21 +6,11 @@ from .models import Student
 from .serializers import StudentSerializer
 
 
-class StudentViewSet(viewsets.ReadOnlyModelViewSet):
+class StudentViewSet(viewsets.ModelViewSet):
+    queryset = Student.objects.select_related("centre", "course").all().order_by("-created_at")
     serializer_class = StudentSerializer
 
-    def get_queryset(self):
-        queryset = Student.objects.select_related('centre_id', 'course_id').all()
 
-        centre_id = self.request.query_params.get('centre_id')
-        course_id = self.request.query_params.get('course_id')
-
-        if centre_id:
-            queryset = queryset.filter(centre_id=centre_id)
-        if course_id:
-            queryset = queryset.filter(course_id=course_id)
-
-        return queryset
 
 class StudentStatsAPI(APIView):
     """

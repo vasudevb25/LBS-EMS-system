@@ -317,8 +317,6 @@ const AdminExaminations = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
-                  <Button variant="outline">Filter by Course</Button>
-                  <Button variant="outline">Filter by Date</Button>
                 </div>
                 <ExamScheduleTable exams={filteredExams} />
               </CardContent>
@@ -346,7 +344,6 @@ const AdminExaminations = () => {
                 </p>
                 <div className="flex justify-center space-x-2">
                   <Button>Generate All Hall Tickets</Button>
-                  <Button variant="outline">Bulk Download</Button>
                 </div>
               </div>
             </CardContent>

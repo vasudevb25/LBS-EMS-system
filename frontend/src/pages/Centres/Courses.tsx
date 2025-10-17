@@ -3,11 +3,9 @@ import { Button } from "../../components/ui/buttons";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "../../components/ui/layout";
-import { Input } from "../../components/ui/inputs";
 import {
   Badge,
   Tabs,
@@ -28,17 +26,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "../../components/ui/menus";
+import { Input } from "../../components/ui/inputs";
 import {
-  Plus,
-  Search,
-  MoreHorizontal,
-  Edit,
-  Trash,
-  FileText,
-  Clock,
-  Users,
-  DollarSign,
-} from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../components/ui/overlays";
+
+import { Plus, MoreHorizontal, Edit, Trash, Clock } from "lucide-react";
 
 interface Course {
   course_id: number;
@@ -57,7 +54,319 @@ interface Stats {
   certificate_courses: number;
 }
 
-const CourseTable = ({ courses }: { courses: Course[] }) => (
+const CentreCourses = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [careerCourses, setCareerCourses] = useState<Course[]>([]);
+  const [certificateCourses, setCertificateCourses] = useState<Course[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [open, setOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [formData, setFormData] = useState({
+    course_code: "",
+    course_name: "",
+    stream: "Career",
+    duration: "",
+    eligibility: "",
+    mou_required: false,
+  });
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/courses/");
+      if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+      const data: Course[] = await res.json();
+
+      setCourses(data);
+      const career = data.filter((c) => c.stream === "Career");
+      const certificate = data.filter((c) => c.stream === "Certificate");
+      setCareerCourses(career);
+      setCertificateCourses(certificate);
+      setStats({
+        total_courses: data.length,
+        career_courses: career.length,
+        certificate_courses: certificate.length,
+      });
+    } catch (err: any) {
+      console.error("Error loading courses:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    const checked =
+      type === "checkbox" ? (e.target as HTMLInputElement).checked : false;
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const openAddModal = () => {
+    setEditingCourse(null);
+    setFormData({
+      course_code: "",
+      course_name: "",
+      stream: "Career",
+      duration: "",
+      eligibility: "",
+      mou_required: false,
+    });
+    setOpen(true);
+  };
+
+  const openEditModal = (course: Course) => {
+    setEditingCourse(course);
+    setFormData({
+      course_code: course.course_code,
+      course_name: course.course_name,
+      stream: course.stream,
+      duration: course.duration,
+      eligibility: course.eligibility,
+      mou_required: course.mou_required,
+    });
+    setOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const method = editingCourse ? "PUT" : "POST";
+      const url = editingCourse
+        ? `http://127.0.0.1:8000/api/courses/${editingCourse.course_id}/`
+        : "http://127.0.0.1:8000/api/courses/";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) throw new Error("Failed to save course");
+
+      await fetchCourses();
+      setOpen(false);
+    } catch (err: any) {
+      console.error("Error saving course:", err);
+      alert("Error saving course: " + err.message);
+    }
+  };
+
+  const deleteCourse = async (course_id: number) => {
+    if (!confirm("Are you sure you want to delete this course?")) return;
+
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/api/courses/${course_id}/`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) throw new Error("Failed to delete course");
+      await fetchCourses();
+    } catch (err: any) {
+      console.error("Error deleting course:", err);
+      alert("Error deleting course: " + err.message);
+    }
+  };
+
+  if (loading) return <div>Loading courses...</div>;
+  if (error) return <div>Error loading courses: {error}</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Course Management
+          </h1>
+        </div>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button
+              onClick={openAddModal}
+              className="bg-gradient-primary hover:bg-primary-glow"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {editingCourse ? "Edit Course" : "Add Course"}
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingCourse ? "Edit Course" : "Add New Course"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Course Name
+                </label>
+                <Input
+                  name="course_name"
+                  value={formData.course_name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Course Code
+                </label>
+                <Input
+                  name="course_code"
+                  value={formData.course_code}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Stream</label>
+                <select
+                  name="stream"
+                  value={formData.stream}
+                  onChange={handleInputChange}
+                  className="border rounded-md w-full p-2"
+                >
+                  <option value="Career">Career</option>
+                  <option value="Certificate">Certificate</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Duration
+                </label>
+                <Input
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Eligibility
+                </label>
+                <Input
+                  name="eligibility"
+                  value={formData.eligibility}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="mou_required"
+                  checked={formData.mou_required}
+                  onChange={handleInputChange}
+                />
+                <label className="text-sm">MOU Required</label>
+              </div>
+
+              <Button type="submit" className="w-full mt-2">
+                {editingCourse ? "Update Course" : "Save Course"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Total Courses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats?.total_courses ?? "-"}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Career Courses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">
+              {stats?.career_courses ?? "-"}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Certificate Courses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-accent">
+              {stats?.certificate_courses ?? "-"}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="career" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="career">Career Courses</TabsTrigger>
+          <TabsTrigger value="certificate">Certificate Courses</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="career">
+          <CourseTable
+            courses={careerCourses}
+            onEdit={openEditModal}
+            onDelete={deleteCourse}
+          />
+        </TabsContent>
+
+        <TabsContent value="certificate">
+          <CourseTable
+            courses={certificateCourses}
+            onEdit={openEditModal}
+            onDelete={deleteCourse}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+/* --- Table Component --- */
+const CourseTable = ({
+  courses,
+  onEdit,
+  onDelete,
+}: {
+  courses: Course[];
+  onEdit: (course: Course) => void;
+  onDelete: (id: number) => void;
+}) => (
   <div className="max-h-[500px] overflow-y-auto border rounded-lg">
     <Table>
       <TableHeader>
@@ -81,17 +390,13 @@ const CourseTable = ({ courses }: { courses: Course[] }) => (
               </div>
             </TableCell>
             <TableCell>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-sm">{course.duration}</span>
-                </div>
+              <div className="flex items-center space-x-1">
+                <Clock className="h-3 w-3 text-muted-foreground" />
+                <span className="text-sm">{course.duration}</span>
               </div>
             </TableCell>
-            <TableCell>
-              <div className="text-xs text-muted-foreground">
-                {course.eligibility}
-              </div>
+            <TableCell className="text-xs text-muted-foreground">
+              {course.eligibility}
             </TableCell>
             <TableCell>
               <Badge variant={course.mou_required ? "default" : "secondary"}>
@@ -107,17 +412,14 @@ const CourseTable = ({ courses }: { courses: Course[] }) => (
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Course
+                  <DropdownMenuItem onClick={() => onEdit(course)}>
+                    <Edit className="mr-2 h-4 w-4" /> Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Manage Syllabus
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash className="mr-2 h-4 w-4" />
-                    Delete Course
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => onDelete(course.course_id)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" /> Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -128,134 +430,5 @@ const CourseTable = ({ courses }: { courses: Course[] }) => (
     </Table>
   </div>
 );
-
-const CentreCourses = () => {
-  const [careerCourses, setCareerCourses] = useState<Course[]>([]);
-  const [certificateCourses, setCertificateCourses] = useState<Course[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const res = await fetch(
-          "http://127.0.0.1:8000/api/courses/?format=json"
-        );
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        const data: Course[] = await res.json();
-
-        const career = data.filter((c) => c.stream === "Career");
-        const certificate = data.filter((c) => c.stream === "Certificate");
-
-        setCareerCourses(career);
-        setCertificateCourses(certificate);
-        setStats({
-          total_courses: data.length,
-          career_courses: career.length,
-          certificate_courses: certificate.length,
-        });
-      } catch (err: any) {
-        console.error("Error loading courses:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
-
-  if (loading) return <div>Loading courses...</div>;
-  if (error) return <div>Error loading courses: {error}</div>;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Course Management
-          </h1>
-        </div>
-        <Button className="bg-gradient-primary hover:bg-primary-glow">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Course
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Courses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.total_courses ?? "-"}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Career Courses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {stats?.career_courses ?? "-"}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Certificate Courses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-accent">
-              {stats?.certificate_courses ?? "-"}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="career" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="career">Career Courses</TabsTrigger>
-          <TabsTrigger value="certificate">Certificate Courses</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="career" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Career Courses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CourseTable courses={careerCourses} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="certificate" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Certificate Courses</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CourseTable courses={certificateCourses} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
 
 export default CentreCourses;

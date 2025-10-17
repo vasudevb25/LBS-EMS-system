@@ -11,3 +11,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('std-stats/', StudentStatsAPI.as_view(), name='std-stats'),
 ]
+
+

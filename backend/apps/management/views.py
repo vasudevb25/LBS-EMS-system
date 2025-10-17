@@ -25,10 +25,11 @@ class CentreViewSet(viewsets.ModelViewSet):
     # Optionally, override destroy to soft delete (optional)
     def destroy(self, request, pk=None):
         centre = get_object_or_404(Centre, pk=pk)
-        centre.is_active = False
-        centre.save()
-        return Response({"status": "Centre deactivated"}, status=status.HTTP_200_OK)
-
+        centre.delete()  # permanently remove from DB
+        return Response(
+            {"status": "Centre deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 # ----------------------------
 # Course API
@@ -36,6 +37,38 @@ class CentreViewSet(viewsets.ModelViewSet):
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all().order_by('course_name')
     serializer_class = CourseSerializer
+
+    # Create new course
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Course added successfully", "data": serializer.data},
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # Edit course
+    def update(self, request, pk=None, *args, **kwargs):
+        course = get_object_or_404(Course, pk=pk)
+        serializer = self.get_serializer(course, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Course updated successfully", "data": serializer.data},
+                status=status.HTTP_200_OK,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # Delete course
+    def destroy(self, request, pk=None, *args, **kwargs):
+        course = get_object_or_404(Course, pk=pk)
+        course.delete()
+        return Response(
+            {"message": "Course deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
 
 # ----------------------------
