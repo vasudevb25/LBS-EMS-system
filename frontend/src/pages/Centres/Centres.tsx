@@ -206,7 +206,6 @@ const CentreCentres = () => {
                 onChange={(e) => setSearchQuery(e.target.value)} // update state
               />
             </div>
-            <Button variant="outline">Filter</Button>
           </div>
 
           <div className="max-h-[500px] overflow-y-auto border rounded-lg">

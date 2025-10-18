@@ -5,21 +5,19 @@ from rest_framework.response import Response
 from .models import Examination
 from .serializers import ExaminationSerializer
 from django.utils import timezone
-from django.db.models import Count, Q
 
 class ExaminationViewSet(viewsets.ModelViewSet):
     queryset = Examination.objects.all().order_by('-created_at')
     serializer_class = ExaminationSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        exam = self.get_object()
+        exam.delete()
+        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class ExamStatsAPIView(APIView):
-    """
-    API to return examination statistics:
-    - Scheduled exams this month
-    - Number of Regular exams
-    - Number of Supply exams
-    - Total available exams
-    """
+
     def get(self, request):
         try:
             today = timezone.now()

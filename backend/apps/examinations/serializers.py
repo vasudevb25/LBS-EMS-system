@@ -8,8 +8,11 @@ class ExaminationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Examination
-        fields = '__all__'
-
+        fields = [
+            'exam_id', 'exam_name', 'subject_code', 'exam_type', 
+            'exam_date', 'exam_start_time', 'exam_end_time',
+            'course', 'centre', 'course_name', 'centre_name', 'created_at'
+        ]
 
 
 class ExamStatsSerializer(serializers.Serializer):

@@ -42,18 +42,26 @@ import {
   Edit,
   Trash,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../components/ui/overlays";
+
+// ------------------ Interfaces ------------------
 
 interface Exam {
-  exam_id: number;
-  course_name: string;
-  centre_name: string;
+  id: number;
   exam_name: string;
+  subject_code: string;
+  exam_type: "Regular" | "Supplementary";
   exam_date: string;
   exam_start_time: string;
   exam_end_time: string;
-  subject_code: string;
-  exam_type: "Regular" | "Supplementary";
-  created_at: string;
+  course_name: string;
+  centre_name: string;
 }
 
 interface ExamStats {
@@ -63,7 +71,15 @@ interface ExamStats {
   total_available: number;
 }
 
-const ExamScheduleTable = ({ exams }: { exams: Exam[] }) => (
+// ------------------ Exam Schedule Table ------------------
+
+const ExamScheduleTable = ({
+  exams,
+  onDelete,
+}: {
+  exams: Exam[];
+  onDelete: (id: number) => void;
+}) => (
   <Table>
     <TableHeader>
       <TableRow>
@@ -76,7 +92,7 @@ const ExamScheduleTable = ({ exams }: { exams: Exam[] }) => (
     </TableHeader>
     <TableBody>
       {exams.map((exam) => (
-        <TableRow key={exam.exam_id}>
+        <TableRow key={exam.id}>
           <TableCell>
             <div className="space-y-1">
               <div className="font-medium">{exam.exam_name}</div>
@@ -131,12 +147,12 @@ const ExamScheduleTable = ({ exams }: { exams: Exam[] }) => (
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem>
-                  <Eye className="mr-2 h-4 w-4" /> View
-                </DropdownMenuItem>
-                <DropdownMenuItem>
                   <Edit className="mr-2 h-4 w-4" /> Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => onDelete(exam.id)}
+                >
                   <Trash className="mr-2 h-4 w-4" /> Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -148,6 +164,8 @@ const ExamScheduleTable = ({ exams }: { exams: Exam[] }) => (
   </Table>
 );
 
+// ------------------ Main Component ------------------
+
 const AdminExaminations = () => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [stats, setStats] = useState<ExamStats | null>(null);
@@ -156,6 +174,19 @@ const AdminExaminations = () => {
   const [errorExams, setErrorExams] = useState<string | null>(null);
   const [errorStats, setErrorStats] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    exam_name: "",
+    subject_code: "",
+    exam_type: "Regular",
+    exam_date: "",
+    exam_start_time: "",
+    exam_end_time: "",
+    course: "",
+    centre: "",
+  });
+  const [courses, setCourses] = useState<any[]>([]);
+  const [centres, setCentres] = useState<any[]>([]);
 
   const filteredExams = exams.filter((exam) => {
     const q = searchQuery.toLowerCase();
@@ -167,36 +198,79 @@ const AdminExaminations = () => {
     );
   });
 
+  // ---------------- Fetch Functions ----------------
+
+  const fetchExams = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/examinations/");
+      if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+      const data = await res.json();
+      setExams(data);
+    } catch (err: any) {
+      setErrorExams(err.message);
+    } finally {
+      setLoadingExams(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    const res = await fetch("http://127.0.0.1:8000/api/courses/");
+    const data = await res.json();
+    setCourses(data);
+  };
+
+  const fetchCentres = async () => {
+    const res = await fetch("http://127.0.0.1:8000/api/centres/");
+    const data = await res.json();
+    setCentres(data);
+  };
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/exam-stats/");
+      if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+      const data = await res.json();
+      setStats(data);
+    } catch (err: any) {
+      setErrorStats(err.message);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/examinations/");
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        const data = await res.json();
-        setExams(data);
-      } catch (err: any) {
-        setErrorExams(err.message);
-      } finally {
-        setLoadingExams(false);
-      }
-    };
-
-    const fetchStats = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/exam-stats/");
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        const data = await res.json();
-        setStats(data);
-      } catch (err: any) {
-        setErrorStats(err.message);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-
     fetchExams();
     fetchStats();
+    fetchCourses();
+    fetchCentres();
   }, []);
+
+  // ---------------- CRUD Handlers ----------------
+
+  const handleCreateExam = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/examinations/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error("Failed to create exam");
+      setOpen(false);
+      fetchExams();
+    } catch (err) {
+      alert(err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this exam?")) return;
+    await fetch(`http://127.0.0.1:8000/api/examinations/${id}/`, {
+      method: "DELETE",
+    });
+    fetchExams();
+  };
+
+  // ---------------- Render ----------------
 
   return (
     <div className="space-y-6">
@@ -211,17 +285,94 @@ const AdminExaminations = () => {
             declaration
           </p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" /> Import Schedule
-          </Button>
-          <Button className="bg-gradient-primary hover:bg-primary-glow">
-            <Plus className="mr-2 h-4 w-4" /> Schedule Exam
-          </Button>
-        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-primary">
+              <Plus className="mr-2 h-4 w-4" /> Schedule Exam
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Schedule New Exam</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input
+                placeholder="Exam Name"
+                onChange={(e) =>
+                  setFormData({ ...formData, exam_name: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Subject Code"
+                onChange={(e) =>
+                  setFormData({ ...formData, subject_code: e.target.value })
+                }
+              />
+              <select
+                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setFormData({ ...formData, exam_type: e.target.value })
+                }
+              >
+                <option value="Regular">Regular</option>
+                <option value="Supplementary">Supplementary</option>
+              </select>
+              <Input
+                type="date"
+                onChange={(e) =>
+                  setFormData({ ...formData, exam_date: e.target.value })
+                }
+              />
+              <Input
+                type="time"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    exam_start_time: e.target.value,
+                  })
+                }
+              />
+              <Input
+                type="time"
+                onChange={(e) =>
+                  setFormData({ ...formData, exam_end_time: e.target.value })
+                }
+              />
+              <select
+                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setFormData({ ...formData, course: e.target.value })
+                }
+              >
+                <option value="">Select Course</option>
+                {courses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.course_name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="w-full border p-2 rounded"
+                onChange={(e) =>
+                  setFormData({ ...formData, centre: e.target.value })
+                }
+              >
+                <option value="">Select Centre</option>
+                {centres.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.centre_name}
+                  </option>
+                ))}
+              </select>
+              <Button onClick={handleCreateExam} className="w-full">
+                Create Exam
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       {loadingStats ? (
         <div>Loading stats...</div>
       ) : errorStats ? (
@@ -297,7 +448,7 @@ const AdminExaminations = () => {
           <TabsTrigger value="halltickets">Hall Tickets</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="schedule" className="space-y-4">
+        <TabsContent value="schedule">
           {loadingExams ? (
             <div>Loading exams...</div>
           ) : errorExams ? (
@@ -309,45 +460,55 @@ const AdminExaminations = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center space-x-2 mb-4">
-                  <div className="relative flex-1">
-                    <Input
-                      placeholder="Search exams by course, date, or code..."
-                      className="pl-8"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
+                  <Input
+                    placeholder="Search exams by course, date, or code..."
+                    className="pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <ExamScheduleTable exams={filteredExams} />
+                <ExamScheduleTable
+                  exams={filteredExams}
+                  onDelete={handleDelete}
+                />
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
         <TabsContent value="halltickets" className="space-y-4">
+          {" "}
           <Card>
+            {" "}
             <CardHeader>
-              <CardTitle>Hall Ticket Generation</CardTitle>
+              {" "}
+              <CardTitle>Hall Ticket Generation</CardTitle>{" "}
               <CardDescription>
-                Generate and manage hall tickets for scheduled examinations
-              </CardDescription>
-            </CardHeader>
+                {" "}
+                Generate and manage hall tickets for scheduled examinations{" "}
+              </CardDescription>{" "}
+            </CardHeader>{" "}
             <CardContent>
+              {" "}
               <div className="text-center py-12">
-                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                {" "}
+                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />{" "}
                 <h3 className="text-lg font-semibold mb-2">
-                  Hall Ticket Management
-                </h3>
+                  {" "}
+                  Hall Ticket Management{" "}
+                </h3>{" "}
                 <p className="text-muted-foreground mb-4">
+                  {" "}
                   Select an exam to generate hall tickets for registered
-                  students
-                </p>
+                  students{" "}
+                </p>{" "}
                 <div className="flex justify-center space-x-2">
-                  <Button>Generate All Hall Tickets</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  {" "}
+                  <Button>Generate All Hall Tickets</Button>{" "}
+                </div>{" "}
+              </div>{" "}
+            </CardContent>{" "}
+          </Card>{" "}
         </TabsContent>
       </Tabs>
     </div>

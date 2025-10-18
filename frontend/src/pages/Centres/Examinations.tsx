@@ -286,8 +286,6 @@ const CentreExaminations = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
-                  <Button variant="outline">Filter by Course</Button>
-                  <Button variant="outline">Filter by Date</Button>
                 </div>
                 <ExamScheduleTable exams={filteredExams} />
               </CardContent>
