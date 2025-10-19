@@ -5,7 +5,7 @@ from .models import Centre, Course
 class CentreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Centre
-        fields = '__all__'  # or explicitly list them if you prefer
+        fields = '__all__'
         extra_kwargs = {
             'created_at': {'read_only': True},
             'is_active': {'default': True},

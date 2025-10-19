@@ -27,8 +27,12 @@ class Student(models.Model):
     guardian_phone_number = models.CharField(max_length=15, null=True, blank=True)
     educational_qualification = models.CharField(max_length=255, null=True, blank=True)
 
+    photo_path = models.ImageField(upload_to="students/media/photos/", null=True, blank=True)
+    payment_proof = models.FileField(upload_to="students/media/payments/", null=True, blank=True)
+
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL,db_column='created_by', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     # Foreign keys
     centre = models.ForeignKey(Centre, on_delete=models.PROTECT, related_name="students")

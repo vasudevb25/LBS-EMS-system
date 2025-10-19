@@ -26,12 +26,3 @@ class Examination(models.Model):
     def __str__(self):
         return f"{self.exam_name} ({self.exam_date})"
 
-
-
-class Certificate(models.Model):
-    # student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    exam = models.ForeignKey(Examination, on_delete=models.CASCADE)
-    generated_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.student} - {self.exam.exam_name}"

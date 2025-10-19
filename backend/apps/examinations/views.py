@@ -1,4 +1,3 @@
-# examinations/views.py
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -23,16 +22,12 @@ class ExamStatsAPIView(APIView):
             today = timezone.now()
             start_of_month = today.replace(day=1)
 
-            # Total exams scheduled this month
             scheduled_exams = Examination.objects.filter(
                 created_at__gte=start_of_month
             ).count()
 
-            # Count exams by type
             total_regular = Examination.objects.filter(exam_type='Regular').count()
-            total_supply = Examination.objects.filter(exam_type='Supply').count()
-
-            # Total available exams (all exams that are active/available)
+            total_supply = Examination.objects.filter(exam_type='Supplementary').count()
             total_available = Examination.objects.count()
 
             data = {

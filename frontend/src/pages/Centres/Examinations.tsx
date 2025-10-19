@@ -137,10 +137,10 @@ const CentreExaminations = () => {
   const filteredExams = exams.filter((exam) => {
     const q = searchQuery.toLowerCase();
     return (
-      exam.course_name.toLowerCase().includes(q) ||
-      exam.centre_name.toLowerCase().includes(q) ||
-      exam.exam_name.toLowerCase().includes(q) ||
-      exam.subject_code.toLowerCase().includes(q)
+      (exam.course_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.centre_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.exam_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.subject_code?.toLowerCase() ?? "").includes(q)
     );
   });
 

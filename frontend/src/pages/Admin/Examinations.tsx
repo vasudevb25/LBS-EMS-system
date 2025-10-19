@@ -30,15 +30,11 @@ import {
 } from "../../components/ui/menus";
 import {
   Plus,
-  Search,
   MoreHorizontal,
   Calendar,
   FileText,
-  Upload,
   Award,
   ClipboardCheck,
-  Users,
-  Eye,
   Edit,
   Trash,
 } from "lucide-react";
@@ -53,7 +49,7 @@ import {
 // ------------------ Interfaces ------------------
 
 interface Exam {
-  id: number;
+  exam_id: number;
   exam_name: string;
   subject_code: string;
   exam_type: "Regular" | "Supplementary";
@@ -71,99 +67,6 @@ interface ExamStats {
   total_available: number;
 }
 
-// ------------------ Exam Schedule Table ------------------
-
-const ExamScheduleTable = ({
-  exams,
-  onDelete,
-}: {
-  exams: Exam[];
-  onDelete: (id: number) => void;
-}) => (
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead>Exam Details</TableHead>
-        <TableHead>Schedule</TableHead>
-        <TableHead>Type</TableHead>
-        <TableHead>Centre</TableHead>
-        <TableHead className="w-[70px]">Actions</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {exams.map((exam) => (
-        <TableRow key={exam.id}>
-          <TableCell>
-            <div className="space-y-1">
-              <div className="font-medium">{exam.exam_name}</div>
-              <div className="text-sm text-muted-foreground">
-                {exam.course_name}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Code: {exam.subject_code}
-              </div>
-            </div>
-          </TableCell>
-
-          <TableCell>
-            <div className="space-y-1">
-              <div className="flex items-center space-x-1">
-                <Calendar className="h-3 w-3 text-muted-foreground" />
-                <span className="text-sm">{exam.exam_date}</span>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {exam.exam_start_time} - {exam.exam_end_time}
-              </div>
-            </div>
-          </TableCell>
-
-          <TableCell>
-            <Badge
-              variant={
-                exam.exam_type === "Regular"
-                  ? "default"
-                  : exam.exam_type === "Supplementary"
-                  ? "secondary"
-                  : "outline"
-              }
-            >
-              {exam.exam_type}
-            </Badge>
-          </TableCell>
-
-          <TableCell>
-            <div className="text-sm text-muted-foreground">
-              {exam.centre_name}
-            </div>
-          </TableCell>
-
-          <TableCell>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => onDelete(exam.id)}
-                >
-                  <Trash className="mr-2 h-4 w-4" /> Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-);
-
 // ------------------ Main Component ------------------
 
 const AdminExaminations = () => {
@@ -175,28 +78,121 @@ const AdminExaminations = () => {
   const [errorStats, setErrorStats] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [open, setOpen] = useState(false);
+  const [editingExamId, setEditingExamId] = useState<number | null>(null);
+
   const [formData, setFormData] = useState({
     exam_name: "",
     subject_code: "",
-    exam_type: "Regular",
+    exam_type: "Regular" as "Regular" | "Supplementary",
     exam_date: "",
     exam_start_time: "",
     exam_end_time: "",
-    course: "",
-    centre: "",
+    course_name: "",
+    centre_name: "",
   });
+
   const [courses, setCourses] = useState<any[]>([]);
   const [centres, setCentres] = useState<any[]>([]);
 
   const filteredExams = exams.filter((exam) => {
     const q = searchQuery.toLowerCase();
     return (
-      exam.course_name.toLowerCase().includes(q) ||
-      exam.centre_name.toLowerCase().includes(q) ||
-      exam.exam_name.toLowerCase().includes(q) ||
-      exam.subject_code.toLowerCase().includes(q)
+      (exam.course_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.centre_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.exam_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.subject_code?.toLowerCase() ?? "").includes(q)
     );
   });
+
+  // ------------------ Exam Schedule Table ------------------
+
+  const ExamScheduleTable = ({
+    exams,
+    onDelete,
+    onEdit,
+  }: {
+    exams: Exam[];
+    onDelete: (id: number) => void;
+    onEdit: (exam: Exam) => void;
+  }) => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Exam Details</TableHead>
+          <TableHead>Schedule</TableHead>
+          <TableHead>Type</TableHead>
+          <TableHead>Centre</TableHead>
+          <TableHead className="w-[70px]">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {exams.map((exam) => (
+          <TableRow key={exam.exam_id}>
+            <TableCell>
+              <div className="space-y-1">
+                <div className="font-medium">{exam.exam_name}</div>
+                <div className="text-sm text-muted-foreground">
+                  {exam.course_name}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Code: {exam.subject_code}
+                </div>
+              </div>
+            </TableCell>
+
+            <TableCell>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-1">
+                  <Calendar className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-sm">{exam.exam_date}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {exam.exam_start_time} - {exam.exam_end_time}
+                </div>
+              </div>
+            </TableCell>
+
+            <TableCell>
+              <Badge
+                variant={exam.exam_type === "Regular" ? "default" : "secondary"}
+              >
+                {exam.exam_type}
+              </Badge>
+            </TableCell>
+
+            <TableCell>
+              <div className="text-sm text-muted-foreground">
+                {exam.centre_name}
+              </div>
+            </TableCell>
+
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => onEdit(exam)}>
+                    <Edit className="mr-2 h-4 w-4" /> Edit
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => onDelete(exam.exam_id)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" /> Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
 
   // ---------------- Fetch Functions ----------------
 
@@ -205,7 +201,11 @@ const AdminExaminations = () => {
       const res = await fetch("http://127.0.0.1:8000/api/examinations/");
       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
       const data = await res.json();
-      setExams(data);
+      const normalized = data.map((exam: any) => ({
+        ...exam,
+        exam_id: exam.exam_id ?? exam.id,
+      }));
+      setExams(normalized);
     } catch (err: any) {
       setErrorExams(err.message);
     } finally {
@@ -216,13 +216,13 @@ const AdminExaminations = () => {
   const fetchCourses = async () => {
     const res = await fetch("http://127.0.0.1:8000/api/courses/");
     const data = await res.json();
-    setCourses(data);
+    setCourses(data.map((c: any) => ({ ...c, id: Number(c.id) })));
   };
 
   const fetchCentres = async () => {
     const res = await fetch("http://127.0.0.1:8000/api/centres/");
     const data = await res.json();
-    setCentres(data);
+    setCentres(data.map((c: any) => ({ ...c, id: Number(c.id) })));
   };
 
   const fetchStats = async () => {
@@ -247,18 +247,52 @@ const AdminExaminations = () => {
 
   // ---------------- CRUD Handlers ----------------
 
-  const handleCreateExam = async () => {
+  const handleSaveExam = async () => {
+    if (
+      !formData.exam_name ||
+      !formData.subject_code ||
+      !formData.course_name ||
+      !formData.centre_name
+    ) {
+      alert("Please fill all required fields.");
+      return;
+    }
+
+    const payload = { ...formData };
+
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/examinations/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) throw new Error("Failed to create exam");
+      const res = await fetch(
+        editingExamId
+          ? `http://127.0.0.1:8000/api/examinations/${editingExamId}/`
+          : "http://127.0.0.1:8000/api/examinations/",
+        {
+          method: editingExamId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Failed to save exam: ${errText}`);
+      }
+
       setOpen(false);
+      setEditingExamId(null);
+      setFormData({
+        exam_name: "",
+        subject_code: "",
+        exam_type: "Regular",
+        exam_date: "",
+        exam_start_time: "",
+        exam_end_time: "",
+        course_name: "",
+        centre_name: "",
+      });
+
       fetchExams();
-    } catch (err) {
-      alert(err);
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
@@ -274,7 +308,7 @@ const AdminExaminations = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header & Dialog */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">
@@ -285,33 +319,48 @@ const AdminExaminations = () => {
             declaration
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+          open={open}
+          onOpenChange={(val) => {
+            setOpen(val);
+            if (!val) setEditingExamId(null);
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary">
-              <Plus className="mr-2 h-4 w-4" /> Schedule Exam
+              <Plus className="mr-2 h-4 w-4" />{" "}
+              {editingExamId ? "Edit Exam" : "Schedule Exam"}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Schedule New Exam</DialogTitle>
+              <DialogTitle>
+                {editingExamId ? "Edit Exam" : "Schedule New Exam"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <Input
                 placeholder="Exam Name"
+                value={formData.exam_name}
                 onChange={(e) =>
                   setFormData({ ...formData, exam_name: e.target.value })
                 }
               />
               <Input
                 placeholder="Subject Code"
+                value={formData.subject_code}
                 onChange={(e) =>
                   setFormData({ ...formData, subject_code: e.target.value })
                 }
               />
               <select
                 className="w-full border p-2 rounded"
+                value={formData.exam_type}
                 onChange={(e) =>
-                  setFormData({ ...formData, exam_type: e.target.value })
+                  setFormData({
+                    ...formData,
+                    exam_type: e.target.value as "Regular" | "Supplementary",
+                  })
                 }
               >
                 <option value="Regular">Regular</option>
@@ -319,53 +368,56 @@ const AdminExaminations = () => {
               </select>
               <Input
                 type="date"
+                value={formData.exam_date}
                 onChange={(e) =>
                   setFormData({ ...formData, exam_date: e.target.value })
                 }
               />
               <Input
                 type="time"
+                value={formData.exam_start_time}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    exam_start_time: e.target.value,
-                  })
+                  setFormData({ ...formData, exam_start_time: e.target.value })
                 }
               />
               <Input
                 type="time"
+                value={formData.exam_end_time}
                 onChange={(e) =>
                   setFormData({ ...formData, exam_end_time: e.target.value })
                 }
               />
               <select
                 className="w-full border p-2 rounded"
+                value={formData.course_name}
                 onChange={(e) =>
-                  setFormData({ ...formData, course: e.target.value })
+                  setFormData({ ...formData, course_name: e.target.value })
                 }
               >
                 <option value="">Select Course</option>
                 {courses.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.course_name}>
                     {c.course_name}
                   </option>
                 ))}
               </select>
               <select
                 className="w-full border p-2 rounded"
+                value={formData.centre_name}
                 onChange={(e) =>
-                  setFormData({ ...formData, centre: e.target.value })
+                  setFormData({ ...formData, centre_name: e.target.value })
                 }
               >
                 <option value="">Select Centre</option>
                 {centres.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.centre_name}>
                     {c.centre_name}
                   </option>
                 ))}
               </select>
-              <Button onClick={handleCreateExam} className="w-full">
-                Create Exam
+
+              <Button onClick={handleSaveExam} className="w-full">
+                {editingExamId ? "Update Exam" : "Create Exam"}
               </Button>
             </div>
           </DialogContent>
@@ -470,6 +522,20 @@ const AdminExaminations = () => {
                 <ExamScheduleTable
                   exams={filteredExams}
                   onDelete={handleDelete}
+                  onEdit={(exam) => {
+                    setEditingExamId(exam.exam_id);
+                    setFormData({
+                      exam_name: exam.exam_name,
+                      subject_code: exam.subject_code,
+                      exam_type: exam.exam_type,
+                      exam_date: exam.exam_date,
+                      exam_start_time: exam.exam_start_time,
+                      exam_end_time: exam.exam_end_time,
+                      course_name: exam.course_name,
+                      centre_name: exam.centre_name,
+                    });
+                    setOpen(true);
+                  }}
                 />
               </CardContent>
             </Card>
@@ -477,38 +543,29 @@ const AdminExaminations = () => {
         </TabsContent>
 
         <TabsContent value="halltickets" className="space-y-4">
-          {" "}
           <Card>
-            {" "}
             <CardHeader>
-              {" "}
-              <CardTitle>Hall Ticket Generation</CardTitle>{" "}
+              <CardTitle>Hall Ticket Generation</CardTitle>
               <CardDescription>
-                {" "}
-                Generate and manage hall tickets for scheduled examinations{" "}
-              </CardDescription>{" "}
-            </CardHeader>{" "}
+                Generate and manage hall tickets for scheduled examinations
+              </CardDescription>
+            </CardHeader>
             <CardContent>
-              {" "}
               <div className="text-center py-12">
-                {" "}
-                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />{" "}
+                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  {" "}
-                  Hall Ticket Management{" "}
-                </h3>{" "}
+                  Hall Ticket Management
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  {" "}
                   Select an exam to generate hall tickets for registered
-                  students{" "}
-                </p>{" "}
+                  students
+                </p>
                 <div className="flex justify-center space-x-2">
-                  {" "}
-                  <Button>Generate All Hall Tickets</Button>{" "}
-                </div>{" "}
-              </div>{" "}
-            </CardContent>{" "}
-          </Card>{" "}
+                  <Button>Generate All Hall Tickets</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
