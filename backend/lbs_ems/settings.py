@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import sys
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -106,23 +107,15 @@ WSGI_APPLICATION = 'lbs_ems.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'LBS-EMS', # Your database name
-        'USER': 'postgres',     # Your PostgreSQL user
-        'PASSWORD': 'root', # Your PostgreSQL password
-        'HOST': 'localhost',     # Or your database host
-        'PORT': '5432',          # Your PostgreSQL port
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default=5432, cast=int),
     }
 }
 
 # settings.py
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = "vasudevbinu25@gmail.com"  # Gmail address
-EMAIL_HOST_PASSWORD = "vrdb cknn ptvq wejy"  # Gmail App Password
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 
