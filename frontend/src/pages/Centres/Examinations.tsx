@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Button } from "../components/ui/buttons";
+import { Button } from "../../components/ui/buttons";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/layout";
-import { Input } from "../components/ui/inputs";
+} from "../../components/ui/layout";
+import { Input } from "../../components/ui/inputs";
 import {
   Badge,
   Tabs,
@@ -20,14 +20,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../components/ui/data";
+} from "../../components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../components/ui/menus";
+} from "../../components/ui/menus";
 import {
   Plus,
   Search,
@@ -71,7 +71,6 @@ const ExamScheduleTable = ({ exams }: { exams: Exam[] }) => (
         <TableHead>Schedule</TableHead>
         <TableHead>Type</TableHead>
         <TableHead>Centre</TableHead>
-        <TableHead className="w-[70px]">Actions</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -120,35 +119,13 @@ const ExamScheduleTable = ({ exams }: { exams: Exam[] }) => (
               {exam.centre_name}
             </div>
           </TableCell>
-
-          <TableCell>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem>
-                  <Eye className="mr-2 h-4 w-4" /> View
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
-                  <Trash className="mr-2 h-4 w-4" /> Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </TableCell>
         </TableRow>
       ))}
     </TableBody>
   </Table>
 );
 
-const Examinations = () => {
+const CentreExaminations = () => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [stats, setStats] = useState<ExamStats | null>(null);
   const [loadingExams, setLoadingExams] = useState(true);
@@ -160,10 +137,10 @@ const Examinations = () => {
   const filteredExams = exams.filter((exam) => {
     const q = searchQuery.toLowerCase();
     return (
-      exam.course_name.toLowerCase().includes(q) ||
-      exam.centre_name.toLowerCase().includes(q) ||
-      exam.exam_name.toLowerCase().includes(q) ||
-      exam.subject_code.toLowerCase().includes(q)
+      (exam.course_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.centre_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.exam_name?.toLowerCase() ?? "").includes(q) ||
+      (exam.subject_code?.toLowerCase() ?? "").includes(q)
     );
   });
 
@@ -210,14 +187,6 @@ const Examinations = () => {
             Manage exam schedules, hall tickets, marks entry, and result
             declaration
           </p>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" /> Import Schedule
-          </Button>
-          <Button className="bg-gradient-primary hover:bg-primary-glow">
-            <Plus className="mr-2 h-4 w-4" /> Schedule Exam
-          </Button>
         </div>
       </div>
 
@@ -317,8 +286,6 @@ const Examinations = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
-                  <Button variant="outline">Filter by Course</Button>
-                  <Button variant="outline">Filter by Date</Button>
                 </div>
                 <ExamScheduleTable exams={filteredExams} />
               </CardContent>
@@ -357,4 +324,4 @@ const Examinations = () => {
   );
 };
 
-export default Examinations;
+export default CentreExaminations;

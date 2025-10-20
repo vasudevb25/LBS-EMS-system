@@ -1,40 +1,33 @@
-# examinations/views.py
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Examination
 from .serializers import ExaminationSerializer
 from django.utils import timezone
-from django.db.models import Count, Q
 
 class ExaminationViewSet(viewsets.ModelViewSet):
     queryset = Examination.objects.all().order_by('-created_at')
     serializer_class = ExaminationSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        exam = self.get_object()
+        exam.delete()
+        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 class ExamStatsAPIView(APIView):
-    """
-    API to return examination statistics:
-    - Scheduled exams this month
-    - Number of Regular exams
-    - Number of Supply exams
-    - Total available exams
-    """
+
     def get(self, request):
         try:
             today = timezone.now()
             start_of_month = today.replace(day=1)
 
-            # Total exams scheduled this month
             scheduled_exams = Examination.objects.filter(
                 created_at__gte=start_of_month
             ).count()
 
-            # Count exams by type
             total_regular = Examination.objects.filter(exam_type='Regular').count()
-            total_supply = Examination.objects.filter(exam_type='Supply').count()
-
-            # Total available exams (all exams that are active/available)
+            total_supply = Examination.objects.filter(exam_type='Supplementary').count()
             total_available = Examination.objects.count()
 
             data = {

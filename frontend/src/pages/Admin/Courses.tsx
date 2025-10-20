@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Button } from "../components/ui/buttons";
+import { Button } from "../../components/ui/buttons";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../components/ui/layout";
-import { Input } from "../components/ui/inputs";
+} from "../../components/ui/layout";
+import { Input } from "../../components/ui/inputs";
 import {
   Badge,
   Tabs,
@@ -20,14 +20,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../components/ui/data";
+} from "../../components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../components/ui/menus";
+} from "../../components/ui/menus";
 import {
   Plus,
   Search,
@@ -66,7 +66,6 @@ const CourseTable = ({ courses }: { courses: Course[] }) => (
           <TableHead>Duration</TableHead>
           <TableHead>Eligibility</TableHead>
           <TableHead>MOU Required</TableHead>
-          <TableHead className="w-[70px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -98,30 +97,6 @@ const CourseTable = ({ courses }: { courses: Course[] }) => (
                 {course.mou_required ? "Required" : "Not Required"}
               </Badge>
             </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Course
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Manage Syllabus
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash className="mr-2 h-4 w-4" />
-                    Delete Course
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -129,7 +104,7 @@ const CourseTable = ({ courses }: { courses: Course[] }) => (
   </div>
 );
 
-const Courses = () => {
+const AdminCourses = () => {
   const [careerCourses, setCareerCourses] = useState<Course[]>([]);
   const [certificateCourses, setCertificateCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -177,10 +152,6 @@ const Courses = () => {
             Course Management
           </h1>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary-glow">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Course
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -258,4 +229,4 @@ const Courses = () => {
   );
 };
 
-export default Courses;
+export default AdminCourses;

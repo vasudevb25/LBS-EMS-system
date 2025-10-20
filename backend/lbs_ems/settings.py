@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import sys
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +31,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = "users.User"
+
 
 # Application definition
 
@@ -46,7 +49,9 @@ INSTALLED_APPS = [
     # Add any third-party apps here
     'apps.management',
     'apps.examinations',
-    'apps.students'
+    'apps.students',
+    'users',
+    'apps.notifications'
 ]
 
 MIDDLEWARE = [
@@ -90,7 +95,9 @@ TEMPLATES = [
 #     ),
 # }
 
-
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 WSGI_APPLICATION = 'lbs_ems.wsgi.application'
 
 
@@ -100,13 +107,16 @@ WSGI_APPLICATION = 'lbs_ems.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'LBS-EMS', # Your database name
-        'USER': 'postgres',     # Your PostgreSQL user
-        'PASSWORD': 'root', # Your PostgreSQL password
-        'HOST': 'localhost',     # Or your database host
-        'PORT': '5432',          # Your PostgreSQL port
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default=5432, cast=int),
     }
 }
+
+# settings.py
+
 
 
 # Password validation
@@ -153,7 +163,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+MEDIA_URL = '/students/media/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected') # Where `collectstatic` will put files
 STATIC_URL = '/static/'
@@ -162,3 +172,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'), # Project-level static files
 ]
+
+
+

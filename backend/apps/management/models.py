@@ -9,7 +9,6 @@ class Centre(models.Model):
     validity_start_date = models.DateField()
     validity_end_date = models.DateField()
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = False  # Tells Django to use the existing table
