@@ -23,20 +23,17 @@ const Login = () => {
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ Save only what's needed
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("user_role", data.user_role);
-        localStorage.setItem("centre_id", data.centre_id || "");
+        localStorage.setItem("user_role", data.role);
+        localStorage.setItem("username", username);
 
-        // ✅ Redirect by role
-        if (data.user_role === "Admin") navigate("/admin/dashboard");
-        else if (data.user_role === "Centre") navigate("/centre/dashboard");
+        if (data.role === "Admin") navigate("/admin/dashboard");
+        else if (data.role === "Centre") navigate("/centre/dashboard");
         else navigate("/dashboard");
       } else {
-        setError(data.error || "Invalid username or password.");
+        setError(data.detail || "Invalid username or password.");
       }
     } catch (err) {
-      console.error("Login failed:", err);
+      console.error(err);
       alert("Login failed. Check console for details.");
     }
   };

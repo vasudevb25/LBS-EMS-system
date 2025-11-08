@@ -25,6 +25,7 @@ const Index = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [prefix, setPrefix] = useState("/");
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -59,6 +60,11 @@ const Index = () => {
         setLoading(false);
       }
     };
+
+    const role = localStorage.getItem("user_role");
+    if (role) {
+      setPrefix(`/${role.toLowerCase()}`);
+    }
 
     fetchStats();
   }, []);
@@ -115,55 +121,35 @@ const Index = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <ModuleCard
               title="Centre Management"
-              description="Manage centres, course allocation, and validity tracking"
+              description=""
               icon={Building2}
-              features={[
-                "Add/Edit/Delete centres",
-                "Course allocation system",
-                "Validity date management",
-                "Centre performance tracking",
-              ]}
+              features={[]}
               gradient="bg-gradient-primary"
-              link="/centres"
+              link={`${prefix}/centres`}
             />
             <ModuleCard
               title="Course Management"
-              description="Comprehensive course administration and fee structure"
+              description=""
               icon={BookOpen}
-              features={[
-                "Career & certificate courses",
-                "Syllabus & content uploads",
-                "Fee structure definition",
-                "Eligibility management",
-              ]}
+              features={[]}
               gradient="bg-gradient-accent"
-              link="/courses"
+              link={`${prefix}/courses`}
             />
             <ModuleCard
               title="Student Registration"
-              description="Streamlined student onboarding and data management"
+              description=""
               icon={Users}
-              features={[
-                "Auto-sync from centres",
-                "Approval workflow",
-                "Document management",
-                "ID generation system",
-              ]}
+              features={[]}
               gradient="bg-gradient-secondary"
-              link="/students"
+              link={`${prefix}/students`}
             />
             <ModuleCard
               title="Examination System"
-              description="End-to-end exam management and certification"
+              description=""
               icon={ClipboardCheck}
-              features={[
-                "Exam scheduling",
-                "Hall ticket generation",
-                "Marks entry & results",
-                "QR code certificates",
-              ]}
+              features={[]}
               gradient="bg-gradient-primary"
-              link="/examinations"
+              link={`${prefix}/examinations`}
             />
           </div>
         </div>
@@ -171,25 +157,6 @@ const Index = () => {
         {/* Sidebar Content */}
         <div className="space-y-6">
           <RecentActivity />
-
-          {/* Quick Actions */}
-          <div className="grid gap-3">
-            <button className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent transition-colors">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-primary" />
-                <span className="font-medium">Schedule Exam</span>
-              </div>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </button>
-
-            <button className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent transition-colors">
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5 text-accent" />
-                <span className="font-medium">Approve Students</span>
-              </div>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </div>
         </div>
       </div>
     </div>

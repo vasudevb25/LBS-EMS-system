@@ -7,18 +7,13 @@ class User(AbstractBaseUser):
     password = models.CharField(max_length=255, db_column='password_hash')
     email = models.EmailField(unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
-    user_role = models.CharField(
-        max_length=50,
-        choices=[('Admin', 'Admin'), ('Centre', 'Centre')]
-    )
-
+    user_role = models.CharField(max_length=50, choices=[('Admin', 'Admin'), ('Centre', 'Centre')])
     centre = models.ForeignKey(
         'management.Centre',
         on_delete=models.CASCADE,
         db_column='centre_id',
         null=True,
-        blank=True,
-        related_name='users'
+        blank=True
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -30,8 +25,7 @@ class User(AbstractBaseUser):
 
     class Meta:
         db_table = 'users'
-        # remove managed=False if Django should control this table
-        # managed = False
+        managed = False  # keep False if the table already exists
 
     def __str__(self):
         return self.username
