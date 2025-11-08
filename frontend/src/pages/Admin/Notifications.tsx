@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/data";
-import { Send } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 
 interface Centre {
   centre_id: number;
@@ -26,13 +26,13 @@ interface Centre {
 }
 
 const Notifications = () => {
-  const [title, setTitle] = useState(""); // notification title
-  const [message, setMessage] = useState(""); // notification message
-  const [recipientType, setRecipientType] = useState("all_centres"); // all or specific
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [recipientType, setRecipientType] = useState("all_centres");
   const [selectedCentreId, setSelectedCentreId] = useState<number | null>(null);
   const [centres, setCentres] = useState<Centre[]>([]);
 
-  // Fetch all centres on load
+  // Fetch centres
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/centres/")
       .then((res) => res.json())
@@ -40,17 +40,22 @@ const Notifications = () => {
       .catch((err) => console.error("Error fetching centres:", err));
   }, []);
 
-  // Send Notification
+  // Send notification
   const sendNotification = async () => {
-    if (!title || !message) {
+    if (!title.trim() || !message.trim()) {
       alert("Please fill in all fields.");
+      return;
+    }
+
+    if (recipientType === "centre_specific" && !selectedCentreId) {
+      alert("Please select a centre.");
       return;
     }
 
     const payload = {
       recipient: recipientType,
-      subject: title,
-      message,
+      subject: title.trim(),
+      message: message.trim(),
       target_centre:
         recipientType === "centre_specific" ? selectedCentreId : null,
     };
@@ -63,16 +68,53 @@ const Notifications = () => {
       });
 
       const data = await res.json();
-      alert(data.status || "Notification sent successfully!");
 
-      // Reset form
+      if (!res.ok) {
+        throw new Error(data.detail || "Failed to send notification");
+      }
+
+      alert(data.status || "Notification sent successfully!");
       setTitle("");
       setMessage("");
       setSelectedCentreId(null);
       setRecipientType("all_centres");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to send notification:", err);
-      alert("Failed to send notification");
+      alert("Error: " + err.message);
+    }
+  };
+
+  // Delete all notifications (Admin only)
+  const clearNotifications = async () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    if (!user?.username) {
+      alert("No user found in local storage.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete all notifications?")) return;
+
+    try {
+      const res = await fetch(
+        "http://127.0.0.1:8000/api/notifications/clear/",
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: user.username }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete notifications.");
+      }
+
+      alert(data.status || "All notifications deleted.");
+    } catch (err) {
+      console.error("Failed to delete notifications:", err);
+      alert("Failed to delete notifications.");
     }
   };
 
@@ -84,7 +126,7 @@ const Notifications = () => {
             Notification Center
           </h1>
           <p className="text-muted-foreground">
-            Send announcements, reminders, and alerts to centres
+            Send announcements, reminders, and alerts to centres.
           </p>
         </div>
       </div>
@@ -95,12 +137,12 @@ const Notifications = () => {
             <CardHeader>
               <CardTitle>Compose Notification</CardTitle>
               <CardDescription>
-                Send notifications to all centres or a specific centre
+                Send notifications to all centres or a specific centre.
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {/* Recipient Selection */}
+              {/* Recipient */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="recipients">Recipients</Label>
@@ -170,7 +212,7 @@ const Notifications = () => {
                 />
               </div>
 
-              {/* Send Button */}
+              {/* Action Buttons */}
               <div className="flex space-x-2">
                 <Button
                   className="bg-gradient-primary hover:bg-primary-glow"
@@ -178,6 +220,15 @@ const Notifications = () => {
                 >
                   <Send className="mr-2 h-4 w-4" />
                   Send Notification
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={clearNotifications}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Clear All Notifications
                 </Button>
               </div>
             </CardContent>

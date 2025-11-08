@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import check_password
 from .models import User
 
+
 class LoginView(APIView):
     def post(self, request):
         username = request.data.get("username")
@@ -12,20 +13,19 @@ class LoginView(APIView):
         role = request.data.get("role")
 
         try:
-            # Fetch user from DB by username
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "Invalid username"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # ✅ Manually check hashed password
+        # ✅ Check password and role
         if check_password(password, user.password) and user.user_role == role:
-            # Optional: Django session login (only if you’re using sessions)
             login(request, user)
             return Response({
                 "message": "Login successful",
-                "role": user.user_role,
-                "username": user.username
-            })
+                "username": user.username,
+                "user_role": user.user_role,
+                "centre_id": getattr(user.centre, "centre_id", None),
+            }, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 

@@ -1,7 +1,7 @@
 from django.db import models
 
 class Centre(models.Model):
-    centre_id = models.AutoField(primary_key=True) # Matches SERIAL PRIMARY KEY
+    centre_id = models.AutoField(primary_key=True)
     centre_code = models.CharField(max_length=10, unique=True)
     centre_name = models.CharField(max_length=255)
     location = models.CharField(max_length=255, null=True, blank=True)
