@@ -25,7 +25,6 @@ class User(AbstractBaseUser):
 
     class Meta:
         db_table = 'users'
-        managed = False  # keep False if the table already exists
 
     def __str__(self):
         return self.username
