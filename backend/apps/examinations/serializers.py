@@ -31,4 +31,3 @@ class ExamStatsSerializer(serializers.Serializer):
     scheduled_exams = serializers.IntegerField()
     hall_tickets = serializers.IntegerField()
     results_published = serializers.IntegerField()
-    certificates_generated = serializers.IntegerField()
