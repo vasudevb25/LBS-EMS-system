@@ -13,6 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('management', '0001_initial'),
+        ('users', '0001_initial')
     ]
 
     operations = [

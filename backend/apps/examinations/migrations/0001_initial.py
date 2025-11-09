@@ -3,16 +3,13 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
-dependencies = [
-    ('users', '0001_initial'),
-]
-
 class Migration(migrations.Migration):
 
     initial = True
 
     dependencies = [
         ('management', '0001_initial'),
+        ('users', '0001_initial')
     ]
 
     operations = [
