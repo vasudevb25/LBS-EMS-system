@@ -31,7 +31,6 @@ class Course(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
 
     class Meta:
-        managed = False
         db_table = 'courses'
 
     def __str__(self):
