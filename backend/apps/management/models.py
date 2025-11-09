@@ -12,7 +12,6 @@ class Centre(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
 
     class Meta:
-        managed = False  # Tells Django to use the existing table
         db_table = 'centres' # Explicitly links to your PostgreSQL table name
 
     def __str__(self):
