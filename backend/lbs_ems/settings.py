@@ -14,6 +14,13 @@ from pathlib import Path
 import os
 import sys
 from decouple import config
+import environ
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / ".env")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,12 +31,13 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secrzet key used in production secret!
-SECRET_KEY = 'django-insecure-hq&spfp97llu08!uqh(=85tu*(iv11(@)s+7jf20b(2jc(zvb)'
+SECRET_KEY = config('SECRET_KEY')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 AUTH_USER_MODEL = "users.User"
 
@@ -96,10 +104,10 @@ WSGI_APPLICATION = 'lbs_ems.wsgi.application'
 
 
 # settings.py
-import dj_database_url
+
 
 DATABASES = {
-    'default': dj_database_url.config(default=config('DATABASE_URL'))
+    "default": env.db(),
 }
 # DATABASES = {
 #     'default': {
@@ -146,7 +154,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/staticfiles/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
