@@ -105,7 +105,7 @@ const AdminStudents = () => {
   });
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/students/?format=json") // replace with your actual endpoint
+    fetch(`${process.env.API_URL}/api/students/?format=json`) // replace with your actual endpoint
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch students");
         return res.json();

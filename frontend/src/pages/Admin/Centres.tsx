@@ -80,8 +80,8 @@ const AdminCentres = () => {
     try {
       setLoading(true);
       const [centresRes, statsRes] = await Promise.all([
-        fetch("http://127.0.0.1:8000/api/centres/?format=json"),
-        fetch("http://127.0.0.1:8000/api/centre-stats/"),
+        fetch(`${process.env.API_URL}/api/centres/?format=json`),
+        fetch(`${process.env.API_URL}/api/centre-stats/`),
       ]);
       const [centresData, statsData] = await Promise.all([
         centresRes.json(),
@@ -123,8 +123,8 @@ const AdminCentres = () => {
   const saveCentre = async () => {
     const method = editing ? "PUT" : "POST";
     const url = editing
-      ? `http://127.0.0.1:8000/api/centres/${editing.centre_id}/`
-      : "http://127.0.0.1:8000/api/centres/";
+      ? `${process.env.API_URL}/api/centres/${editing.centre_id}/`
+      : `${process.env.API_URL}/api/centres/`;
 
     try {
       const res = await fetch(url, {
@@ -169,7 +169,7 @@ const AdminCentres = () => {
   const deleteCentre = async (id: number) => {
     if (!confirm("Delete this centre?")) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/centres/${id}/`, {
+      const res = await fetch(`${process.env.API_URL}/api/centres/${id}/`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");

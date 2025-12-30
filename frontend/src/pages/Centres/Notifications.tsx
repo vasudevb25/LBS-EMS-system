@@ -31,7 +31,7 @@ const CentreNotifications = () => {
   // Fetch notifications from API
   const fetchNotifications = () => {
     fetch(
-      `http://127.0.0.1:8000/api/notifications/history/?centre_id=${centreId}`
+      `${process.env.API_URL}/api/notifications/history/?centre_id=${centreId}`
     )
       .then((res) => res.json())
       .then((data) => setNotifications(data))

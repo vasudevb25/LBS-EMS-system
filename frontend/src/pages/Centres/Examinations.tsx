@@ -147,7 +147,7 @@ const CentreExaminations = () => {
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/examinations/");
+        const res = await fetch(`${process.env.API_URL}/api/examinations/`);
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data = await res.json();
         setExams(data);
@@ -160,7 +160,7 @@ const CentreExaminations = () => {
 
     const fetchStats = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/exam-stats/");
+        const res = await fetch(`${process.env.API_URL}/api/exam-stats/`);
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data = await res.json();
         setStats(data);
