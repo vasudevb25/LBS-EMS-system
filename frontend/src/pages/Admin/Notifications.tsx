@@ -20,10 +20,14 @@ import {
 } from "../../components/ui/data";
 import { Send, Trash2 } from "lucide-react";
 
+
 interface Centre {
   centre_id: number;
   centre_name: string;
 }
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 const Notifications = () => {
   const [title, setTitle] = useState("");
@@ -34,7 +38,7 @@ const Notifications = () => {
 
   // Fetch centres
   useEffect(() => {
-    fetch(`${process.env.API_URL}/api/centres/`)
+    fetch(`${API_URL}/api/centres/`)
       .then((res) => res.json())
       .then((data) => setCentres(data))
       .catch((err) => console.error("Error fetching centres:", err));
@@ -61,7 +65,7 @@ const Notifications = () => {
     };
 
     try {
-      const res = await fetch(`${process.env.API_URL}/api/notifications/send/`, {
+      const res = await fetch(`${API_URL}/api/notifications/send/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -94,10 +98,10 @@ const Notifications = () => {
     }
 
     if (!confirm("Are you sure you want to delete all notifications?")) return;
-
+    API_URL;
     try {
       const res = await fetch(
-        `${process.env.API_URL}/api/notifications/clear/`,
+        `${API_URL}/api/notifications/clear/`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },

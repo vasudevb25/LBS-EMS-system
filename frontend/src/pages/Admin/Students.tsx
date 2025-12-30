@@ -31,6 +31,7 @@ import {
   Download,
   UserCheck,
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Student {
   student_id: number;
@@ -105,7 +106,7 @@ const AdminStudents = () => {
   });
 
   useEffect(() => {
-    fetch(`${process.env.API_URL}/api/students/?format=json`) // replace with your actual endpoint
+    fetch(`${API_URL}/api/students/?format=json`) // replace with your actual endpoint
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch students");
         return res.json();

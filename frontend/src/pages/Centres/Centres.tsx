@@ -34,6 +34,7 @@ import {
   Calendar,
   BookOpen,
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const cn = (...classes: any[]) => classes.filter(Boolean).join(" ");
 
@@ -79,23 +80,21 @@ const CentreCentres = () => {
     const fetchData = async () => {
       try {
         // Fetch centres
-        const centreRes = await fetch(
-          `${process.env.API_URL}/api/centres/?format=json`
-        );
+        const centreRes = await fetch(`${API_URL}/api/centres/?format=json`);
         if (!centreRes.ok)
           throw new Error(`Centres API error: ${centreRes.status}`);
         const centreData = await centreRes.json();
 
         // Fetch stats
-        const statsRes = await fetch(`${process.env.API_URL}/api/centre-stats/`);
+        const statsRes = await fetch(`${API_URL}/api/centre-stats/`);
+        API_URL;
         if (!statsRes.ok)
           throw new Error(`Stats API error: ${statsRes.status}`);
         const statsData = await statsRes.json();
 
-        // Fetch students
-        const studentsRes = await fetch(`${process.env.API_URL}/api/students/`);
-        if (!studentsRes.ok)
-          throw new Error(`Students API error: ${studentsRes.status}`);
+        // Fetch studentsAPI_URL
+        const studentsRes = await fetch(`${API_URL}/api/students/`);
+        if (!studentsRes.ok) throw new Error(`Students API errAPI_URLtatus}`);
         const studentsData = await studentsRes.json();
 
         // Count total students

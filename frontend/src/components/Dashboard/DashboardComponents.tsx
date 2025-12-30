@@ -12,6 +12,7 @@ import { LucideIcon, ArrowRight, Clock, ExternalLink } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Stats Card Component
 interface StatsCardProps {
@@ -201,9 +202,9 @@ export function RecentActivity() {
     const fetchActivities = async () => {
       try {
         const [centresRes, coursesRes, examsRes] = await Promise.all([
-          fetch(`${process.env.API_URL}/api/centres/`),
-          fetch(`${process.env.API_URL}/api/courses/`),
-          fetch(`${process.env.API_URL}/api/examinations/`),
+          fetch(`${API_URL}/api/centres/`),
+          fetch(`${API_URL}/api/courses/`),
+          fetch(`${API_URL}/api/examinations/`),
         ]);
 
         if (!centresRes.ok)

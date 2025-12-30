@@ -40,6 +40,8 @@ import {
   DollarSign,
 } from "lucide-react";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface Course {
   course_id: number;
   course_code: string;
@@ -114,9 +116,7 @@ const AdminCourses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch(
-          `${process.env.API_URL}/api/courses/?format=json`
-        );
+        const res = await fetch(`${API_URL}/api/courses/?format=json`);
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data: Course[] = await res.json();
 

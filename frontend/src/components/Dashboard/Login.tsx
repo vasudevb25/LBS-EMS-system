@@ -8,13 +8,14 @@ const Login = () => {
   const [role, setRole] = useState("Admin");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await fetch(`${process.env.API_URL}/api/login/`, {
+      const res = await fetch(`${API_URL}/api/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, role }),

@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../components/ui/overlays";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Student {
   student_id: number;
@@ -180,9 +181,9 @@ const CentreStudents = () => {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${process.env.API_URL}/api/students/`),
-      fetch(`${process.env.API_URL}/api/centres/`),
-      fetch(`${process.env.API_URL}/api/courses/`),
+      fetch(`${API_URL}/api/students/`),
+      fetch(`${API_URL}/api/centres/`),
+      fetch(`${API_URL}/api/courses/`),
     ])
       .then(async ([studentsRes, centresRes, coursesRes]) => {
         if (!studentsRes.ok || !centresRes.ok || !coursesRes.ok)
@@ -267,7 +268,7 @@ const CentreStudents = () => {
     if (!confirm("Are you sure you want to delete this student?")) return;
     try {
       const res = await fetch(
-        `${process.env.API_URL}/api/students/${student.student_id}/`,
+        `${API_URL}/api/students/${student.student_id}/`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete student");
@@ -325,7 +326,7 @@ const CentreStudents = () => {
       if (formData.payment_proof instanceof File)
         formPayload.append("payment_proof", formData.payment_proof);
 
-      const res = await fetch(`${process.env.API_URL}/api/students/`, {
+      const res = await fetch(`${API_URL}/api/students/`, {
         method: "POST",
         body: formPayload,
       });
@@ -556,7 +557,7 @@ const CentreStudents = () => {
                   return;
                 try {
                   const res = await fetch(
-                    `${process.env.API_URL}/api/students/${s.student_id}/`,
+                    `${API_URL}/api/students/${s.student_id}/`,
                     { method: "DELETE" }
                   );
                   if (!res.ok) throw new Error("Failed to delete student");

@@ -47,6 +47,7 @@ interface Course {
   mou_required: boolean;
   created_at: string;
 }
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Stats {
   total_courses: number;
@@ -79,7 +80,7 @@ const CentreCourses = () => {
 
   const fetchCourses = async () => {
     try {
-      const res = await fetch(`${process.env.API_URL}/api/courses/`);
+      const res = await fetch(`${API_URL}/api/courses/`);
       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
       const data: Course[] = await res.json();
 
@@ -145,8 +146,8 @@ const CentreCourses = () => {
     try {
       const method = editingCourse ? "PUT" : "POST";
       const url = editingCourse
-        ? `${process.env.API_URL}/api/courses/${editingCourse.course_id}/`
-        : `${process.env.API_URL}/api/courses/`;
+        ? `${API_URL}/api/courses/${editingCourse.course_id}/`
+        : `${API_URL}/api/courses/`;
 
       const res = await fetch(url, {
         method,
@@ -189,10 +190,9 @@ const CentreCourses = () => {
     if (!confirm("Are you sure you want to delete this course?")) return;
 
     try {
-      const res = await fetch(
-        `${process.env.API_URL}/api/courses/${course_id}/`,
-        { method: "DELETE" }
-      );
+      const res = await fetch(`${API_URL}/api/courses/${course_id}/`, {
+        method: "DELETE",
+      });
 
       if (!res.ok) {
         let errorMsg = `HTTP ${res.status} - ${res.statusText}`;

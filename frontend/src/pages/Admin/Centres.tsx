@@ -15,6 +15,8 @@ import {
   DialogTrigger,
 } from "../../components/ui/overlays";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 import { Input } from "../../components/ui/inputs";
 import {
   Badge,
@@ -80,8 +82,8 @@ const AdminCentres = () => {
     try {
       setLoading(true);
       const [centresRes, statsRes] = await Promise.all([
-        fetch(`${process.env.API_URL}/api/centres/?format=json`),
-        fetch(`${process.env.API_URL}/api/centre-stats/`),
+        fetch(`${API_URL}/api/centres/?format=json`),
+        fetch(`${API_URL}/api/centre-stats/`),
       ]);
       const [centresData, statsData] = await Promise.all([
         centresRes.json(),
@@ -123,8 +125,8 @@ const AdminCentres = () => {
   const saveCentre = async () => {
     const method = editing ? "PUT" : "POST";
     const url = editing
-      ? `${process.env.API_URL}/api/centres/${editing.centre_id}/`
-      : `${process.env.API_URL}/api/centres/`;
+      ? `${API_URL}/api/centres/${editing.centre_id}/`
+      : `${API_URL}/api/centres/`;
 
     try {
       const res = await fetch(url, {
@@ -169,7 +171,7 @@ const AdminCentres = () => {
   const deleteCentre = async (id: number) => {
     if (!confirm("Delete this centre?")) return;
     try {
-      const res = await fetch(`${process.env.API_URL}/api/centres/${id}/`, {
+      const res = await fetch(`${API_URL}/api/centres/${id}/`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");

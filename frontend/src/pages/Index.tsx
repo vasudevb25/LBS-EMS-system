@@ -4,6 +4,7 @@ import {
   ModuleCard,
   RecentActivity,
 } from "../components/Dashboard/DashboardComponents";
+const API_URL = import.meta.env.VITE_API_URL;
 
 import {
   Users,
@@ -32,10 +33,10 @@ const Index = () => {
       try {
         const [studentsRes, centresRes, coursesRes, examsRes] =
           await Promise.all([
-            fetch(`${process.env.API_URL}/api/students/`),
-            fetch(`${process.env.API_URL}/api/centres/`),
-            fetch(`${process.env.API_URL}/api/courses/`),
-            fetch(`${process.env.API_URL}/api/examinations/`),
+            fetch(`${API_URL}/api/students/`),
+            fetch(`${API_URL}/api/centres/`),
+            fetch(`${API_URL}/api/courses/`),
+            fetch(`${API_URL}/api/examinations/`),
           ]);
 
         if (!studentsRes.ok) throw new Error("Failed to fetch students");

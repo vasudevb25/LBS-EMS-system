@@ -27,6 +27,7 @@ import {
   Calendar,
   GraduationCap,
 } from "lucide-react";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Centre {
   centre_id: number;
@@ -69,12 +70,12 @@ const AdminReports = () => {
           coursesRes,
           centresListRes,
         ] = await Promise.all([
-          fetch(`${process.env.API_URL}/api/students/`),
-          fetch(`${process.env.API_URL}/api/centre-stats/`),
-          fetch(`${process.env.API_URL}/api/exam-stats/`),
-          fetch(`${process.env.API_URL}/api/std-stats/`),
-          fetch(`${process.env.API_URL}/api/courses/`),
-          fetch(`${process.env.API_URL}/api/centres/`),
+          fetch(`${API_URL}/api/students/`),
+          fetch(`${API_URL}/api/centre-stats/`),
+          fetch(`${API_URL}/api/exam-stats/`),
+          fetch(`${API_URL}/api/std-stats/`),
+          fetch(`${API_URL}/api/courses/`),
+          fetch(`${API_URL}/api/centres/`),
         ]);
 
         const studentsData = await studentsRes.json();
@@ -131,7 +132,7 @@ const AdminReports = () => {
 
   const handleGenerateReport = async () => {
     try {
-      let url = `${process.env.API_URL}/api/students/`;
+      let url = `${API_URL}/api/students/`;
 
       if (reportType === "centre" && selectedCentre) {
         // ✅ Only send valid centre IDs

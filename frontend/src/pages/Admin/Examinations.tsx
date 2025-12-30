@@ -46,6 +46,8 @@ import {
   DialogTrigger,
 } from "../../components/ui/overlays";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 // ------------------ Interfaces ------------------
 
 interface Exam {
@@ -198,7 +200,7 @@ const AdminExaminations = () => {
 
   const fetchExams = async () => {
     try {
-      const res = await fetch(`${process.env.API_URL}/api/examinations/`);
+      const res = await fetch(`${API_URL}/api/examinations/`);
       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
       const data = await res.json();
       const normalized = data.map((exam: any) => ({
@@ -214,20 +216,20 @@ const AdminExaminations = () => {
   };
 
   const fetchCourses = async () => {
-    const res = await fetch(`${process.env.API_URL}/api/courses/`);
+    const res = await fetch(`${API_URL}/api/courses/`);
     const data = await res.json();
     setCourses(data.map((c: any) => ({ ...c, id: Number(c.id) })));
   };
 
   const fetchCentres = async () => {
-    const res = await fetch(`${process.env.API_URL}/api/centres/`);
+    const res = await fetch(`${API_URL}/api/centres/`);
     const data = await res.json();
     setCentres(data.map((c: any) => ({ ...c, id: Number(c.id) })));
   };
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${process.env.API_URL}/api/exam-stats/`);
+      const res = await fetch(`${API_URL}/api/exam-stats/`);
       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
       const data = await res.json();
       setStats(data);
@@ -263,8 +265,8 @@ const AdminExaminations = () => {
     try {
       const res = await fetch(
         editingExamId
-          ? `${process.env.API_URL}/api/examinations/${editingExamId}/`
-          : `${process.env.API_URL}/api/examinations/`,
+          ? `${API_URL}/api/examinations/${editingExamId}/`
+          : `${API_URL}/api/examinations/`,
         {
           method: editingExamId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
@@ -298,7 +300,7 @@ const AdminExaminations = () => {
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this exam?")) return;
-    await fetch(`${process.env.API_URL}/api/examinations/${id}/`, {
+    await fetch(`${API_URL}/api/examinations/${id}/`, {
       method: "DELETE",
     });
     fetchExams();

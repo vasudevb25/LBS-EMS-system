@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "../../components/ui/layout";
 import { Input } from "../../components/ui/inputs";
+const API_URL = import.meta.env.VITE_API_URL;
+
 import {
   Badge,
   Tabs,
@@ -147,7 +149,7 @@ const CentreExaminations = () => {
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        const res = await fetch(`${process.env.API_URL}/api/examinations/`);
+        const res = await fetch(`${API_URL}/api/examinations/`);
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data = await res.json();
         setExams(data);
@@ -160,7 +162,7 @@ const CentreExaminations = () => {
 
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${process.env.API_URL}/api/exam-stats/`);
+        const res = await fetch(`${API_URL}/api/exam-stats/`);
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data = await res.json();
         setStats(data);

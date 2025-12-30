@@ -14,6 +14,7 @@ import {
   TabsContent,
   Badge,
 } from "../../components/ui/data";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Notification {
   id: number;
@@ -30,9 +31,7 @@ const CentreNotifications = () => {
 
   // Fetch notifications from API
   const fetchNotifications = () => {
-    fetch(
-      `${process.env.API_URL}/api/notifications/history/?centre_id=${centreId}`
-    )
+    fetch(`${API_URL}/api/notifications/history/?centre_id=${centreId}`)
       .then((res) => res.json())
       .then((data) => setNotifications(data))
       .catch((err) => console.error("Error fetching notifications:", err));
@@ -41,8 +40,6 @@ const CentreNotifications = () => {
   useEffect(() => {
     fetchNotifications();
   }, [centreId]);
-
-
 
   return (
     <div className="space-y-6">

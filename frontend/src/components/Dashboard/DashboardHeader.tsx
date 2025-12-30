@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/menus";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export function DashboardHeader() {
   const navigate = useNavigate();
   const [user, setUser] = useState<{ username: string; role: string } | null>(
@@ -30,7 +32,7 @@ export function DashboardHeader() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch(`${process.env.API_URL}/api/logout/`, {
+      const res = await fetch(`${API_URL}/api/logout/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // still okay for Django session-based logout
