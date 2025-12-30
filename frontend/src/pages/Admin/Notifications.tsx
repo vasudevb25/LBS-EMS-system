@@ -34,7 +34,7 @@ const Notifications = () => {
 
   // Fetch centres
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/centres/")
+    fetch(`${process.env.API_URL}/api/centres/`)
       .then((res) => res.json())
       .then((data) => setCentres(data))
       .catch((err) => console.error("Error fetching centres:", err));
@@ -61,7 +61,7 @@ const Notifications = () => {
     };
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/notifications/send/", {
+      const res = await fetch(`${process.env.API_URL}/api/notifications/send/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -97,7 +97,7 @@ const Notifications = () => {
 
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/api/notifications/clear/",
+        `${process.env.API_URL}/api/notifications/clear/`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },

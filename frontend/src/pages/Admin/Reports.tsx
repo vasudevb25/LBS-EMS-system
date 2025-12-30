@@ -69,12 +69,12 @@ const AdminReports = () => {
           coursesRes,
           centresListRes,
         ] = await Promise.all([
-          fetch("http://127.0.0.1:8000/api/students/"),
-          fetch("http://127.0.0.1:8000/api/centre-stats/"),
-          fetch("http://127.0.0.1:8000/api/exam-stats/"),
-          fetch("http://127.0.0.1:8000/api/std-stats/"),
-          fetch("http://127.0.0.1:8000/api/courses/"),
-          fetch("http://127.0.0.1:8000/api/centres/"),
+          fetch(`${process.env.API_URL}/api/students/`),
+          fetch(`${process.env.API_URL}/api/centre-stats/`),
+          fetch(`${process.env.API_URL}/api/exam-stats/`),
+          fetch(`${process.env.API_URL}/api/std-stats/`),
+          fetch(`${process.env.API_URL}/api/courses/`),
+          fetch(`${process.env.API_URL}/api/centres/`),
         ]);
 
         const studentsData = await studentsRes.json();
@@ -131,7 +131,7 @@ const AdminReports = () => {
 
   const handleGenerateReport = async () => {
     try {
-      let url = "http://127.0.0.1:8000/api/students/";
+      let url = `${process.env.API_URL}/api/students/`;
 
       if (reportType === "centre" && selectedCentre) {
         // ✅ Only send valid centre IDs

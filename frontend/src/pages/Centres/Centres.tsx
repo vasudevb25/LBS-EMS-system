@@ -80,20 +80,20 @@ const CentreCentres = () => {
       try {
         // Fetch centres
         const centreRes = await fetch(
-          "http://127.0.0.1:8000/api/centres/?format=json"
+          `${process.env.API_URL}/api/centres/?format=json`
         );
         if (!centreRes.ok)
           throw new Error(`Centres API error: ${centreRes.status}`);
         const centreData = await centreRes.json();
 
         // Fetch stats
-        const statsRes = await fetch("http://127.0.0.1:8000/api/centre-stats/");
+        const statsRes = await fetch(`${process.env.API_URL}/api/centre-stats/`);
         if (!statsRes.ok)
           throw new Error(`Stats API error: ${statsRes.status}`);
         const statsData = await statsRes.json();
 
         // Fetch students
-        const studentsRes = await fetch("http://127.0.0.1:8000/api/students/");
+        const studentsRes = await fetch(`${process.env.API_URL}/api/students/`);
         if (!studentsRes.ok)
           throw new Error(`Students API error: ${studentsRes.status}`);
         const studentsData = await studentsRes.json();

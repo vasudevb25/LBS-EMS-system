@@ -201,9 +201,9 @@ export function RecentActivity() {
     const fetchActivities = async () => {
       try {
         const [centresRes, coursesRes, examsRes] = await Promise.all([
-          fetch("http://127.0.0.1:8000/api/centres/"),
-          fetch("http://127.0.0.1:8000/api/courses/"),
-          fetch("http://127.0.0.1:8000/api/examinations/"),
+          fetch(`${process.env.API_URL}/api/centres/`),
+          fetch(`${process.env.API_URL}/api/courses/`),
+          fetch(`${process.env.API_URL}/api/examinations/`),
         ]);
 
         if (!centresRes.ok)

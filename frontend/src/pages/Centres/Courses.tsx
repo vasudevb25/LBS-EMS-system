@@ -79,7 +79,7 @@ const CentreCourses = () => {
 
   const fetchCourses = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/courses/");
+      const res = await fetch(`${process.env.API_URL}/api/courses/`);
       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
       const data: Course[] = await res.json();
 
@@ -145,8 +145,8 @@ const CentreCourses = () => {
     try {
       const method = editingCourse ? "PUT" : "POST";
       const url = editingCourse
-        ? `http://127.0.0.1:8000/api/courses/${editingCourse.course_id}/`
-        : "http://127.0.0.1:8000/api/courses/";
+        ? `${process.env.API_URL}/api/courses/${editingCourse.course_id}/`
+        : `${process.env.API_URL}/api/courses/`;
 
       const res = await fetch(url, {
         method,
@@ -190,7 +190,7 @@ const CentreCourses = () => {
 
     try {
       const res = await fetch(
-        `http://127.0.0.1:8000/api/courses/${course_id}/`,
+        `${process.env.API_URL}/api/courses/${course_id}/`,
         { method: "DELETE" }
       );
 

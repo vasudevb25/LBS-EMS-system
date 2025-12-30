@@ -115,7 +115,7 @@ const AdminCourses = () => {
     const fetchCourses = async () => {
       try {
         const res = await fetch(
-          "http://127.0.0.1:8000/api/courses/?format=json"
+          `${process.env.API_URL}/api/courses/?format=json`
         );
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data: Course[] = await res.json();

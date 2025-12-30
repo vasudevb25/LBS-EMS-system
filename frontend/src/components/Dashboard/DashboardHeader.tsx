@@ -30,7 +30,7 @@ export function DashboardHeader() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/logout/", {
+      const res = await fetch(`${process.env.API_URL}/api/logout/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // still okay for Django session-based logout
