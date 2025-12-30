@@ -278,7 +278,6 @@ export function RecentActivity() {
     };
   }, []);
 
-  // explicit `items` array for AnimatedList (React nodes)
   const items = useMemo(
     () =>
       activities.map((activity) => (

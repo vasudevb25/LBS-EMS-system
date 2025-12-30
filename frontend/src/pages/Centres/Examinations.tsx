@@ -307,13 +307,9 @@ const CentreExaminations = () => {
                 <h3 className="text-lg font-semibold mb-2">
                   Hall Ticket Management
                 </h3>
-                <p className="text-muted-foreground mb-4">
-                  Select an exam to generate hall tickets for registered
-                  students
-                </p>
+
                 <div className="flex justify-center space-x-2">
                   <Button>Generate All Hall Tickets</Button>
-                  <Button variant="outline">Bulk Download</Button>
                 </div>
               </div>
             </CardContent>

@@ -42,34 +42,12 @@ const CentreNotifications = () => {
     fetchNotifications();
   }, [centreId]);
 
-  // Delete all notifications for this centre
-  const clearNotifications = async () => {
-    if (!confirm("Are you sure you want to delete all notifications?")) return;
 
-    try {
-      const res = await fetch(
-        `http://127.0.0.1:8000/api/notifications/clear/?centre_id=${centreId}`,
-        { method: "DELETE" }
-      );
-      const data = await res.json();
-      alert(data.status);
-      setNotifications([]); // Clear from UI
-    } catch (err) {
-      console.error("Failed to delete notifications:", err);
-      alert("Failed to delete notifications");
-    }
-  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
-        <button
-          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          onClick={clearNotifications}
-        >
-          Clear All Notifications
-        </button>
       </div>
 
       <Tabs defaultValue="history" className="space-y-4">

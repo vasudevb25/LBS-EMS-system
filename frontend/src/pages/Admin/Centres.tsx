@@ -126,26 +126,42 @@ const AdminCentres = () => {
       ? `http://127.0.0.1:8000/api/centres/${editing.centre_id}/`
       : "http://127.0.0.1:8000/api/centres/";
 
-    const payload = {
-      centre_code: form.centre_code,
-      centre_name: form.centre_name,
-      location: form.location || "",
-      district: form.district || "",
-      validity_start_date: form.validity_start_date,
-      validity_end_date: form.validity_end_date,
-      is_active: form.is_active ?? true,
-    };
     try {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error("Failed to save centre");
+
+      if (!res.ok) {
+        // Try to parse error message from server
+        let errorMsg = `HTTP ${res.status} - ${res.statusText}`;
+        try {
+          const data = await res.json();
+          // Django REST Framework usually returns an object with field errors
+          if (typeof data === "object" && data !== null) {
+            errorMsg = Object.entries(data)
+              .map(([field, value]) => `${field}: ${value}`)
+              .join("\n");
+          } else if (typeof data === "string") {
+            errorMsg = data;
+          }
+        } catch (jsonErr) {
+          // fallback if JSON parsing fails
+        }
+        throw new Error(errorMsg);
+      }
+
       await fetchData();
       setModalOpen(false);
-    } catch (err) {
-      alert("Error saving centre.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+          ? err
+          : "Unknown error";
+      alert("Error saving centre:\n" + message);
       console.error(err);
     }
   };

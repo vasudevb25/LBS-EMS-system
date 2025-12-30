@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-from management.models import Centre  # Make sure this import path matches your app name
 
 class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
@@ -9,10 +8,8 @@ class User(AbstractBaseUser):
     email = models.EmailField(unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     user_role = models.CharField(max_length=50, choices=[('Admin', 'Admin'), ('Centre', 'Centre')])
-    
-    # ✅ Corrected: ForeignKey to Centre
     centre = models.ForeignKey(
-        Centre,
+        'management.Centre',
         on_delete=models.CASCADE,
         db_column='centre_id',
         null=True,
@@ -28,7 +25,6 @@ class User(AbstractBaseUser):
 
     class Meta:
         db_table = 'users'
-        managed = False  # keep False if the table already exists
 
     def __str__(self):
         return self.username

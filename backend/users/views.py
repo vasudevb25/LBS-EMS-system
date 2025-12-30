@@ -12,14 +12,11 @@ class LoginView(APIView):
         role = request.data.get("role")
 
         try:
-            # Fetch user from DB by username
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response({"error": "Invalid username"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # ✅ Manually check hashed password
         if check_password(password, user.password) and user.user_role == role:
-            # Optional: Django session login (only if you’re using sessions)
             login(request, user)
             return Response({
                 "message": "Login successful",

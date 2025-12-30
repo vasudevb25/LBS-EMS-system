@@ -154,13 +154,34 @@ const CentreCourses = () => {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Failed to save course");
+      if (!res.ok) {
+        let errorMsg = `HTTP ${res.status} - ${res.statusText}`;
+        try {
+          const data = await res.json();
+          if (typeof data === "object" && data !== null) {
+            errorMsg = Object.entries(data)
+              .map(([field, value]) => `${field}: ${value}`)
+              .join("\n");
+          } else if (typeof data === "string") {
+            errorMsg = data;
+          }
+        } catch (jsonErr) {
+          // fallback if JSON parsing fails
+        }
+        throw new Error(errorMsg);
+      }
 
       await fetchCourses();
       setOpen(false);
-    } catch (err: any) {
-      console.error("Error saving course:", err);
-      alert("Error saving course: " + err.message);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+          ? err
+          : "Unknown error";
+      alert("Error saving course:\n" + message);
+      console.error(err);
     }
   };
 
@@ -172,11 +193,34 @@ const CentreCourses = () => {
         `http://127.0.0.1:8000/api/courses/${course_id}/`,
         { method: "DELETE" }
       );
-      if (!res.ok) throw new Error("Failed to delete course");
+
+      if (!res.ok) {
+        let errorMsg = `HTTP ${res.status} - ${res.statusText}`;
+        try {
+          const data = await res.json();
+          if (typeof data === "object" && data !== null) {
+            errorMsg = Object.entries(data)
+              .map(([field, value]) => `${field}: ${value}`)
+              .join("\n");
+          } else if (typeof data === "string") {
+            errorMsg = data;
+          }
+        } catch (jsonErr) {
+          // fallback if JSON parsing fails
+        }
+        throw new Error(errorMsg);
+      }
+
       await fetchCourses();
-    } catch (err: any) {
-      console.error("Error deleting course:", err);
-      alert("Error deleting course: " + err.message);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+          ? err
+          : "Unknown error";
+      alert("Error deleting course:\n" + message);
+      console.error(err);
     }
   };
 
