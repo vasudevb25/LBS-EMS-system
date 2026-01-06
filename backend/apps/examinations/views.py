@@ -1,6 +1,9 @@
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
+
+from apps.examinations.permissions import ExaminationPermission
 from .models import Examination
 from .serializers import ExaminationSerializer
 from django.utils import timezone
@@ -8,15 +11,10 @@ from django.utils import timezone
 class ExaminationViewSet(viewsets.ModelViewSet):
     queryset = Examination.objects.all().order_by('-created_at')
     serializer_class = ExaminationSerializer
-
-    def destroy(self, request, *args, **kwargs):
-        exam = self.get_object()
-        exam.delete()
-        return Response({"message": "Exam deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-
+    permission_classes = [ExaminationPermission]
 
 class ExamStatsAPIView(APIView):
-
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
             today = timezone.now()

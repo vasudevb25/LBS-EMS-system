@@ -1,88 +1,79 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { RouteObject } from "react-router-dom";
+// routes.tsx
+import { Navigate, RouteObject } from "react-router-dom";
 import Login from "../components/Dashboard/Login";
 import NotFound from "../pages/NotFound";
 
-// Single AppLayout
+// Layout
 import { AppLayout } from "../components/Layout/AppLayout";
 
-// Admin pages
-import AdminCentres from "../pages/Admin/Centres";
-import AdminCourses from "../pages/Admin/Courses";
-import AdminStudents from "../pages/Admin/Students";
-import AdminExaminations from "../pages/Admin/Examinations";
-import AdminNotifications from "../pages/Admin/Notifications";
-import AdminReports from "../pages/Admin/Reports";
-
-// Centre pages
-import CentreCentres from "../pages/Centres/Centres";
-import CentreCourses from "../pages/Centres/Courses";
-import CentreStudents from "../pages/Centres/Students";
-import CentreExaminations from "../pages/Centres/Examinations";
-import CentreNotifications from "../pages/Centres/Notifications";
-
-// Shared dashboard
+// Pages
+import CentresPage from "../pages/Centres";
+import CoursesPage from "../pages/Courses";
+import StudentsPage from "../pages/Students";
+import ExaminationsPage from "../pages/Examinations";
+import NotificationsPageAdmin from "../pages/Notifications_admin";
+import NotificationsPageCentre from "../pages/Notifications_centre";
+import ReportsPage from "../pages/Reports";
 import Index from "../pages/Index";
 
-interface PrivateRouteProps {
-  roleAllowed: string | string[];
+/* ---------- AUTH GUARD ---------- */
+const PrivateRoute = ({
+  element,
+  adminOnly = false,
+}: {
   element: JSX.Element;
-}
+  adminOnly?: boolean;
+}) => {
+  const username = localStorage.getItem("username");
+  const isAdmin = localStorage.getItem("is_admin") === "true";
 
-const PrivateRoute = ({ roleAllowed, element }: PrivateRouteProps) => {
-  const userRole = localStorage.getItem("user_role");
-  const roles = Array.isArray(roleAllowed) ? roleAllowed : [roleAllowed];
+  if (!username) {
+    return <Navigate to="/login" replace />;
+  }
 
-  if (!userRole) return <Navigate to="/login" replace />;
-  if (!roles.includes(userRole)) return <Navigate to="/login" replace />;
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/app/dashboard" replace />;
+  }
 
   return element;
 };
 
+/* ---------- ROUTES ---------- */
 export const routes: RouteObject[] = [
   {
     path: "/",
     element: <Navigate to="/login" replace />,
   },
+
   {
     path: "/login",
     element: <Login />,
   },
 
-  // ---------- ADMIN ROUTES ----------
   {
-    path: "/admin",
-    element: (
-      <PrivateRoute roleAllowed="Admin" element={<AppLayout role="Admin" />} />
-    ),
+    path: "/app",
+    element: <PrivateRoute element={<AppLayout />} />,
     children: [
       { path: "dashboard", element: <Index /> },
-      { path: "centres", element: <AdminCentres /> },
-      { path: "courses", element: <AdminCourses /> },
-      { path: "students", element: <AdminStudents /> },
-      { path: "examinations", element: <AdminExaminations /> },
-      { path: "notifications", element: <AdminNotifications /> },
-      { path: "reports", element: <AdminReports /> },
-      { path: "", element: <Navigate to="dashboard" replace /> },
-    ],
-  },
 
-  // ---------- CENTRE ROUTES ----------
-  {
-    path: "/centre",
-    element: (
-      <PrivateRoute
-        roleAllowed="Centre"
-        element={<AppLayout role="Centre" />}
-      />
-    ),
-    children: [
-      { path: "dashboard", element: <Index /> },
-      { path: "centres", element: <CentreCentres /> },
-      { path: "courses", element: <CentreCourses /> },
-      { path: "students", element: <CentreStudents /> },
-      { path: "examinations", element: <CentreExaminations /> },
-      { path: "notification", element: <CentreNotifications /> },
+      // Shared READ pages
+      { path: "centres", element: <CentresPage /> },
+      { path: "courses", element: <CoursesPage /> },
+      { path: "students", element: <StudentsPage /> },
+      { path: "examinations", element: <ExaminationsPage /> },
+
+      // Notifications (decided at render time)
+      {
+        path: "notifications",
+        element: <NotificationsRouter />,
+      },
+
+      // Admin-only
+      {
+        path: "reports",
+        element: <PrivateRoute adminOnly element={<ReportsPage />} />,
+      },
+
       { path: "", element: <Navigate to="dashboard" replace /> },
     ],
   },
@@ -92,3 +83,9 @@ export const routes: RouteObject[] = [
     element: <NotFound />,
   },
 ];
+
+/* ---------- NOTIFICATIONS SWITCH ---------- */
+function NotificationsRouter() {
+  const isAdmin = localStorage.getItem("is_admin") === "true";
+  return isAdmin ? <NotificationsPageAdmin /> : <NotificationsPageCentre />;
+}

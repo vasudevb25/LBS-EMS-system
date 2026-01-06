@@ -5,18 +5,19 @@ from datetime import date, timedelta
 from .models import Student
 from .serializers import StudentSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
+from apps.students.permissions import StudentPermission 
 
 
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.select_related("centre", "course").all().order_by("-created_at")
     serializer_class = StudentSerializer
     parser_classes = (MultiPartParser, FormParser)  # <-- important
+    permission_classes = [StudentPermission]
 
 
 class StudentStatsAPI(APIView):
-    """
-    Returns statistics about students, such as those who joined in the last month.
-    """
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         today = date.today()
         one_month_ago = today - timedelta(days=30)

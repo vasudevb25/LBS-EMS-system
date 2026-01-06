@@ -1,11 +1,13 @@
+/// <reference types="vite/client" />
+
 import styled from "styled-components";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../lib/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Admin");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -14,27 +16,22 @@ const Login = () => {
     setError("");
 
     try {
-      const res = await fetch(`${process.env.API_URL}/api/login/`, {
+      // apiFetch RETURNS DATA, NOT Response
+      const data = await apiFetch(`/api/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role }),
+        body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
+      // Store auth info
+      localStorage.setItem("username", data.username);
+      localStorage.setItem("is_admin", String(data.is_admin));
 
-      if (res.ok) {
-        localStorage.setItem("user_role", data.role);
-        localStorage.setItem("username", username);
-
-        if (data.role === "Admin") navigate("/admin/dashboard");
-        else if (data.role === "Centre") navigate("/centre/dashboard");
-        else navigate("/dashboard");
-      } else {
-        setError(data.detail || "Invalid username or password.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Login failed. Check console for details.");
+      // Redirect
+      navigate("/app/dashboard", { replace: true });
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      setError(err?.message || "Invalid credentials");
     }
   };
 
@@ -42,6 +39,7 @@ const Login = () => {
     <StyledWrapper>
       <div className="container">
         <div className="heading">Sign In</div>
+
         {error && <div className="error-message">{error}</div>}
 
         <form className="form" onSubmit={handleLogin}>
@@ -53,6 +51,7 @@ const Login = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
+
           <input
             placeholder="Password"
             type="password"
@@ -61,18 +60,7 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <select
-            className="input"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            style={{ marginTop: "12px" }}
-          >
-            <option value="Admin">Admin</option>
-            <option value="Centre">Centre</option>
-          </select>
-          <span className="forgot-password">
-            <a href="#">Forgot Password?</a>
-          </span>
+
           <input type="submit" value="Sign In" className="login-button" />
         </form>
       </div>

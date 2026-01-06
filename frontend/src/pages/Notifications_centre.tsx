@@ -1,4 +1,6 @@
 // centre/CentreNotifications.tsx
+/// <reference types="vite/client" />
+
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -6,14 +8,16 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "../../components/ui/layout";
+} from "../components/ui/layout";
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
   Badge,
-} from "../../components/ui/data";
+} from "../components/ui/data";
+import { apiFetch } from "../lib/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Notification {
   id: number;
@@ -24,15 +28,13 @@ interface Notification {
   sent_date: string;
 }
 
-const CentreNotifications = () => {
+const NotificationsPageCentre = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [centreId] = useState<number>(2); // Replace with logged-in centre ID
 
   // Fetch notifications from API
   const fetchNotifications = () => {
-    fetch(
-      `${process.env.API_URL}/api/notifications/history/?centre_id=${centreId}`
-    )
+    apiFetch(`/api/notifications/history/?centre_id=${centreId}`)
       .then((res) => res.json())
       .then((data) => setNotifications(data))
       .catch((err) => console.error("Error fetching notifications:", err));
@@ -41,8 +43,6 @@ const CentreNotifications = () => {
   useEffect(() => {
     fetchNotifications();
   }, [centreId]);
-
-
 
   return (
     <div className="space-y-6">
@@ -89,4 +89,4 @@ const CentreNotifications = () => {
   );
 };
 
-export default CentreNotifications;
+export default NotificationsPageCentre;

@@ -1,33 +1,43 @@
+from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework import status
-from django.contrib.auth import login, logout
-from django.contrib.auth.hashers import check_password
-from .models import User
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
+@method_decorator(csrf_exempt, name="dispatch")
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = [] 
+
     def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-        role = request.data.get("role")
+        user = authenticate(
+            username=request.data.get("username"),
+            password=request.data.get("password"),
+        )
 
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response({"error": "Invalid username"}, status=status.HTTP_401_UNAUTHORIZED)
+        if not user:
+            return Response(
+                {"error": "Invalid credentials"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
-        if check_password(password, user.password) and user.user_role == role:
-            login(request, user)
-            return Response({
-                "message": "Login successful",
-                "role": user.user_role,
-                "username": user.username
-            })
-        else:
-            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        login(request, user)
+
+        return Response({
+            "username": user.username,
+            "is_admin": user.is_staff,
+        })
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class LogoutView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         logout(request)
-        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+        response = Response({"message": "Logged out"})
+        response.delete_cookie("sessionid")
+        response.delete_cookie("csrftoken")
+        return response

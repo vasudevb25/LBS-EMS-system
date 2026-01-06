@@ -6,23 +6,36 @@ import {
   BookOpen,
   Users,
   ClipboardCheck,
+  Bell,
+  FileText,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-const navigationCentre = [
-  { name: "Dashboard", href: "/centre/dashboard", icon: LayoutDashboard },
-  { name: "Centre Management", href: "/centre/centres", icon: Building2 },
-  { name: "Course Management", href: "/centre/courses", icon: BookOpen },
-  { name: "Student Registration", href: "/centre/students", icon: Users },
+const navigationAdmin = [
+  { name: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
+  { name: "Centre Management", href: "/app/centres", icon: Building2 },
+  { name: "Course Management", href: "/app/courses", icon: BookOpen },
+  { name: "Student Registration", href: "/app/students", icon: Users },
   {
     name: "Examination System",
-    href: "/centre/examinations",
+    href: "/app/examinations",
     icon: ClipboardCheck,
   },
-  { name: "Notifications", href: "/centre/notification", icon: Users },
+  { name: "Notifications", href: "/app/notifications", icon: Bell },
+  { name: "Reports", href: "/app/reports", icon: FileText },
 ];
 
-export function SidebarCentre() {
+export function Sidebar() {
+  // Filter navigation items based on admin status
+  const filteredNavigation = navigationAdmin.filter((item) => {
+    // Only show Reports for admin users
+    if (item.name === "Reports" && !isAdmin) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className={cn("pb-12 w-64")}>
       <div className="space-y-4 py-4">
@@ -34,7 +47,7 @@ export function SidebarCentre() {
               </span>
             </div>
             <div>
-              <h2 className="text-lg font-semibold">EMS Centre</h2>
+              <h2 className="text-lg font-semibold">EMS Admin</h2>
             </div>
           </div>
 
@@ -43,7 +56,7 @@ export function SidebarCentre() {
               Main Menu
             </h2>
             <ScrollArea className="h-[300px]">
-              {navigationCentre.map((item) => (
+              {filteredNavigation.map((item) => (
                 <NavLink
                   key={item.name}
                   to={item.href}

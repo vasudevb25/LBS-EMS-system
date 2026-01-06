@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import {
   Card,
   CardContent,
@@ -8,12 +10,14 @@ import {
 import AnimatedList from "../../components/ui/Animatedlist";
 import { Badge } from "../../components/ui/data";
 import { Button } from "../../components/ui/buttons";
-import { LucideIcon, ArrowRight, Clock, ExternalLink } from "lucide-react";
+import { LucideIcon, ArrowRight, Clock } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
+import { apiFetch } from "../../lib/api";
 
-// Stats Card Component
+/* ---------------- Stats Card ---------------- */
+
 interface StatsCardProps {
   title: string;
   value: string;
@@ -33,7 +37,7 @@ export function StatsCard({
 }: StatsCardProps) {
   return (
     <Card className={cn("transition-all hover:shadow-elegant", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
@@ -65,7 +69,8 @@ export function StatsCard({
   );
 }
 
-// Module Card Component
+/* ---------------- Module Card ---------------- */
+
 interface ModuleCardProps {
   title: string;
   description: string;
@@ -87,29 +92,25 @@ export function ModuleCard({
 }: ModuleCardProps) {
   const navigate = useNavigate();
 
-  const handleClick = () => {
-    if (link && link !== "#") {
-      navigate(link);
-    }
-  };
-
   return (
     <Card
       className={cn(
         "group transition-all duration-300 hover:shadow-glow hover:-translate-y-1 cursor-pointer",
         className
       )}
+      onClick={() => link !== "#" && navigate(link)}
     >
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className={cn("p-2 rounded-lg text-white", gradient)}>
             <Icon className="h-6 w-6" />
           </div>
-          <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
         </div>
         <CardTitle className="text-xl">{title}</CardTitle>
         <CardDescription className="text-sm">{description}</CardDescription>
       </CardHeader>
+
       <CardContent>
         <ul className="space-y-2">
           {features.map((feature, index) => (
@@ -117,21 +118,19 @@ export function ModuleCard({
               key={index}
               className="flex items-center text-sm text-muted-foreground"
             >
-              <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2" />
+              <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2" />
               {feature}
             </li>
           ))}
         </ul>
-        <Button
-          className="w-full mt-4 group-hover:bg-primary-glow transition-colors"
-          onClick={handleClick}
-        >
-          Access Module
-        </Button>
+
+        <Button className="w-full mt-4">Access Module</Button>
       </CardContent>
     </Card>
   );
 }
+
+/* ---------------- Recent Activity ---------------- */
 
 interface Centre {
   centre_id: number;
@@ -160,149 +159,107 @@ interface Activity {
   type: ActivityType;
   title: string;
   description: string;
-  created_at: string; // raw timestamp for sorting
-  timeAgo: string; // human readable
+  created_at: string;
+  timeAgo: string;
   badgeText: string;
 }
 
-const getBadgeColor = (type: string): string => {
-  switch (type.toLowerCase()) {
+const getBadgeColor = (type: ActivityType) => {
+  switch (type) {
     case "centre":
-      return "bg-blue-400 text-white"; // Blue badge
+      return "bg-blue-500 text-white";
     case "course":
-      return "bg-green-500 text-white"; // Green badge
+      return "bg-green-500 text-white";
     case "exam":
-      return "bg-yellow-400 text-black"; // Yellow badge
+      return "bg-yellow-400 text-black";
     default:
-      return "bg-gray-300 text-black"; // Default gray badge
+      return "bg-gray-300";
   }
 };
 
-const getTimeAgo = (dateString: string) => {
-  const created = new Date(dateString);
-  const diff = Date.now() - created.getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  const days = Math.floor(hours / 24);
-  return `${days} day${days > 1 ? "s" : ""} ago`;
+const getTimeAgo = (date: string) => {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr ago`;
+  return `${Math.floor(hrs / 24)} day ago`;
 };
 
 export function RecentActivity() {
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-
-    const fetchActivities = async () => {
+    const load = async () => {
       try {
-        const [centresRes, coursesRes, examsRes] = await Promise.all([
-          fetch(`${process.env.API_URL}/api/centres/`),
-          fetch(`${process.env.API_URL}/api/courses/`),
-          fetch(`${process.env.API_URL}/api/examinations/`),
-        ]);
-
-        if (!centresRes.ok)
-          throw new Error(`Centres fetch failed: ${centresRes.status}`);
-        if (!coursesRes.ok)
-          throw new Error(`Courses fetch failed: ${coursesRes.status}`);
-        if (!examsRes.ok)
-          throw new Error(`Exams fetch failed: ${examsRes.status}`);
-
         const [centres, courses, exams]: [Centre[], Course[], Exam[]] =
           await Promise.all([
-            centresRes.json(),
-            coursesRes.json(),
-            examsRes.json(),
+            apiFetch("/api/centres/"),
+            apiFetch("/api/courses/"),
+            apiFetch("/api/examinations/"),
           ]);
 
-        const centreActivities: Activity[] = centres.map((c) => ({
-          id: `centre-${c.centre_id}`,
-          type: "centre",
-          title: "New Centre Created",
-          description: `${c.centre_name} has been added to the system.`,
-          created_at: c.created_at,
-          timeAgo: getTimeAgo(c.created_at),
-          badgeText: "Centre",
-        }));
-
-        const courseActivities: Activity[] = courses.map((c) => ({
-          id: `course-${c.course_id}`,
-          type: "course",
-          title: "New Course Added",
-          description: `${c.course_name} (${c.stream}) created.`,
-          created_at: c.created_at,
-          timeAgo: getTimeAgo(c.created_at),
-          badgeText: "Course",
-        }));
-
-        const examActivities: Activity[] = exams.map((e) => ({
-          id: `exam-${e.exam_id}`,
-          type: "exam",
-          title: "Exam Scheduled",
-          description: `${e.exam_name} created by ${e.centre_name}.`,
-          created_at: e.created_at,
-          timeAgo: getTimeAgo(e.created_at),
-          badgeText: "Exam",
-        }));
-
-        // combine and sort newest -> oldest by created_at
-        const all = [
-          ...centreActivities,
-          ...courseActivities,
-          ...examActivities,
+        const combined: Activity[] = [
+          ...centres.map((c) => ({
+            id: `centre-${c.centre_id}`,
+            type: "centre" as const,
+            title: "New Centre Created",
+            description: `${c.centre_name} added`,
+            created_at: c.created_at,
+            timeAgo: getTimeAgo(c.created_at),
+            badgeText: "Centre",
+          })),
+          ...courses.map((c) => ({
+            id: `course-${c.course_id}`,
+            type: "course" as const,
+            title: "New Course Added",
+            description: `${c.course_name} (${c.stream})`,
+            created_at: c.created_at,
+            timeAgo: getTimeAgo(c.created_at),
+            badgeText: "Course",
+          })),
+          ...exams.map((e) => ({
+            id: `exam-${e.exam_id}`,
+            type: "exam" as const,
+            title: "Exam Scheduled",
+            description: e.exam_name,
+            created_at: e.created_at,
+            timeAgo: getTimeAgo(e.created_at),
+            badgeText: "Exam",
+          })),
         ].sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 
-        if (mounted) {
-          setActivities(all);
-        }
+        setActivities(combined);
       } catch (err: any) {
-        console.error("Error fetching activities:", err);
-        if (mounted) setError(err.message || "Failed to load activities");
+        console.error(err);
+        setError(err.message || "Failed to load activity");
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchActivities();
-
-    return () => {
-      mounted = false;
-    };
+    load();
   }, []);
 
   const items = useMemo(
     () =>
-      activities.map((activity) => (
-        <div
-          key={activity.id}
-          className="flex items-start space-x-4 pb-4 last:pb-0 border-b last:border-0"
-          role="listitem"
-        >
+      activities.map((a) => (
+        <div key={a.id} className="flex space-x-4 pb-4 border-b last:border-0">
           <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium leading-none">
-                {activity.title}
-              </p>
-              <Badge className={getBadgeColor(activity.type)}>
-                {activity.badgeText}
-              </Badge>
+            <div className="flex justify-between">
+              <p className="text-sm font-medium">{a.title}</p>
+              <Badge className={getBadgeColor(a.type)}>{a.badgeText}</Badge>
             </div>
-
-            <p className="text-sm text-muted-foreground">
-              {activity.description}
-            </p>
-
+            <p className="text-sm text-muted-foreground">{a.description}</p>
             <div className="flex items-center text-xs text-muted-foreground">
-              <Clock className="mr-1 h-3 w-3" />
-              {activity.timeAgo}
+              <Clock className="h-3 w-3 mr-1" />
+              {a.timeAgo}
             </div>
           </div>
         </div>
@@ -311,31 +268,22 @@ export function RecentActivity() {
   );
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          Recent Activity
-        </CardTitle>
+        <CardTitle>Recent Activity</CardTitle>
         <CardDescription>
           Latest updates from your education management system
         </CardDescription>
       </CardHeader>
-
       <CardContent>
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading activities...</p>
+          <p className="text-sm text-muted-foreground">Loading…</p>
         ) : error ? (
-          <p className="text-sm text-destructive">Error: {error}</p>
+          <p className="text-sm text-destructive">{error}</p>
         ) : activities.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No recent activity</p>
+          <p className="text-sm text-muted-foreground">No activity yet</p>
         ) : (
-          <AnimatedList
-            items={items}
-            onItemSelect={(item, index) => console.log("Selected:", index)}
-            showGradients={true}
-            enableArrowNavigation={true}
-            displayScrollbar={true}
-          />
+          <AnimatedList items={items} />
         )}
       </CardContent>
     </Card>
