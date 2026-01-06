@@ -1,11 +1,11 @@
+/// <reference types="vite/client" />
+
 import { useEffect, useState } from "react";
 import {
   StatsCard,
   ModuleCard,
   RecentActivity,
 } from "../components/Dashboard/DashboardComponents";
-const API_URL = import.meta.env.VITE_API_URL;
-
 import {
   Users,
   GraduationCap,
@@ -13,9 +13,8 @@ import {
   ClipboardCheck,
   UserCheck,
   BookOpen,
-  TrendingUp,
-  Calendar,
 } from "lucide-react";
+import { apiFetch } from "../lib/api";
 
 const Index = () => {
   const [stats, setStats] = useState({
@@ -26,46 +25,30 @@ const Index = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [prefix, setPrefix] = useState("/");
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [studentsRes, centresRes, coursesRes, examsRes] =
-          await Promise.all([
-            fetch(`${API_URL}/api/students/`),
-            fetch(`${API_URL}/api/centres/`),
-            fetch(`${API_URL}/api/courses/`),
-            fetch(`${API_URL}/api/examinations/`),
-          ]);
-
-        if (!studentsRes.ok) throw new Error("Failed to fetch students");
-        if (!centresRes.ok) throw new Error("Failed to fetch centres");
-        if (!coursesRes.ok) throw new Error("Failed to fetch courses");
-        if (!examsRes.ok) throw new Error("Failed to fetch examinations");
-
-        const studentsData = await studentsRes.json();
-        const centresData = await centresRes.json();
-        const coursesData = await coursesRes.json();
-        const examsData = await examsRes.json();
+        const [students, centres, courses, exams] = await Promise.all([
+          apiFetch("/api/students/"),
+          apiFetch("/api/centres/"),
+          apiFetch("/api/courses/"),
+          apiFetch("/api/examinations/"),
+        ]);
 
         setStats({
-          totalStudents: studentsData.length,
-          totalCentres: centresData.length,
-          totalCourses: coursesData.length,
-          totalExams: examsData.length,
+          totalStudents: Array.isArray(students) ? students.length : 0,
+          totalCentres: Array.isArray(centres) ? centres.length : 0,
+          totalCourses: Array.isArray(courses) ? courses.length : 0,
+          totalExams: Array.isArray(exams) ? exams.length : 0,
         });
       } catch (err: any) {
-        setError(err.message);
+        console.error("Dashboard stats error:", err);
+        setError(err.message || "Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
     };
-
-    const role = localStorage.getItem("user_role");
-    if (role) {
-      setPrefix(`/${role.toLowerCase()}`);
-    }
 
     fetchStats();
   }, []);
@@ -107,9 +90,9 @@ const Index = () => {
             icon={GraduationCap}
           />
           <StatsCard
-            title="Total no of examinations"
+            title="Total Examinations"
             value={stats.totalExams.toLocaleString()}
-            description="exam work"
+            description="Scheduled exams"
             icon={UserCheck}
           />
         </div>
@@ -117,7 +100,6 @@ const Index = () => {
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Module Cards */}
         <div className="lg:col-span-2 space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <ModuleCard
@@ -126,7 +108,7 @@ const Index = () => {
               icon={Building2}
               features={[]}
               gradient="bg-gradient-primary"
-              link={`${prefix}/centres`}
+              link="/app/centres"
             />
             <ModuleCard
               title="Course Management"
@@ -134,7 +116,7 @@ const Index = () => {
               icon={BookOpen}
               features={[]}
               gradient="bg-gradient-accent"
-              link={`${prefix}/courses`}
+              link="/app/courses"
             />
             <ModuleCard
               title="Student Registration"
@@ -142,7 +124,7 @@ const Index = () => {
               icon={Users}
               features={[]}
               gradient="bg-gradient-secondary"
-              link={`${prefix}/students`}
+              link="/app/students"
             />
             <ModuleCard
               title="Examination System"
@@ -150,12 +132,12 @@ const Index = () => {
               icon={ClipboardCheck}
               features={[]}
               gradient="bg-gradient-primary"
-              link={`${prefix}/examinations`}
+              link="/app/examinations"
             />
           </div>
         </div>
 
-        {/* Sidebar Content */}
+        {/* Sidebar */}
         <div className="space-y-6">
           <RecentActivity />
         </div>

@@ -1,14 +1,15 @@
-// admin/Notifications.tsx
+/// <reference types="vite/client" />
+
 import { useEffect, useState } from "react";
-import { Button } from "../../components/ui/buttons";
+import { Button } from "../components/ui/buttons";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../components/ui/layout";
-import { Input, Textarea, Label } from "../../components/ui/inputs";
+} from "../components/ui/layout";
+import { Input, Textarea, Label } from "../components/ui/inputs";
 import {
   Tabs,
   TabsContent,
@@ -17,34 +18,41 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/data";
+} from "../components/ui/data";
 import { Send, Trash2 } from "lucide-react";
-
+import { apiFetch } from "../lib/api";
 
 interface Centre {
   centre_id: number;
   centre_name: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-
-const Notifications = () => {
+const NotificationsPageAdmin = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [recipientType, setRecipientType] = useState("all_centres");
+  const [recipientType, setRecipientType] = useState<
+    "all_centres" | "centre_specific"
+  >("all_centres");
   const [selectedCentreId, setSelectedCentreId] = useState<number | null>(null);
   const [centres, setCentres] = useState<Centre[]>([]);
 
-  // Fetch centres
+  /* ---------------- FETCH CENTRES ---------------- */
+
   useEffect(() => {
-    fetch(`${API_URL}/api/centres/`)
-      .then((res) => res.json())
-      .then((data) => setCentres(data))
-      .catch((err) => console.error("Error fetching centres:", err));
+    const loadCentres = async () => {
+      try {
+        const data = await apiFetch("/api/centres/");
+        setCentres(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error fetching centres:", err);
+      }
+    };
+
+    loadCentres();
   }, []);
 
-  // Send notification
+  /* ---------------- SEND NOTIFICATION ---------------- */
+
   const sendNotification = async () => {
     if (!title.trim() || !message.trim()) {
       alert("Please fill in all fields.");
@@ -65,78 +73,55 @@ const Notifications = () => {
     };
 
     try {
-      const res = await fetch(`${API_URL}/api/notifications/send/`, {
+      const data = await apiFetch("/api/notifications/send/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      alert(data?.status || "Notification sent successfully!");
 
-      if (!res.ok) {
-        throw new Error(data.detail || "Failed to send notification");
-      }
-
-      alert(data.status || "Notification sent successfully!");
       setTitle("");
       setMessage("");
       setSelectedCentreId(null);
       setRecipientType("all_centres");
     } catch (err: any) {
       console.error("Failed to send notification:", err);
-      alert("Error: " + err.message);
+      alert(err.message || "Failed to send notification");
     }
   };
 
-  // Delete all notifications (Admin only)
+  /* ---------------- CLEAR NOTIFICATIONS ---------------- */
+
   const clearNotifications = async () => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    if (!user?.username) {
-      alert("No user found in local storage.");
-      return;
-    }
-
     if (!confirm("Are you sure you want to delete all notifications?")) return;
-    API_URL;
+
     try {
-      const res = await fetch(
-        `${API_URL}/api/notifications/clear/`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: user.username }),
-        }
-      );
+      const data = await apiFetch("/api/notifications/clear/", {
+        method: "DELETE",
+      });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to delete notifications.");
-      }
-
-      alert(data.status || "All notifications deleted.");
-    } catch (err) {
+      alert(data?.status || "All notifications deleted.");
+    } catch (err: any) {
       console.error("Failed to delete notifications:", err);
-      alert("Failed to delete notifications.");
+      alert(err.message || "Failed to delete notifications");
     }
   };
+
+  /* ---------------- RENDER ---------------- */
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Notification Center
-          </h1>
-          <p className="text-muted-foreground">
-            Send announcements, reminders, and alerts to centres.
-          </p>
-        </div>
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Notification Center
+        </h1>
+        <p className="text-muted-foreground">
+          Send announcements, reminders, and alerts to centres.
+        </p>
       </div>
 
-      <Tabs defaultValue="compose" className="space-y-4">
-        <TabsContent value="compose" className="space-y-4">
+      <Tabs defaultValue="compose">
+        <TabsContent value="compose">
           <Card>
             <CardHeader>
               <CardTitle>Compose Notification</CardTitle>
@@ -149,10 +134,12 @@ const Notifications = () => {
               {/* Recipient */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="recipients">Recipients</Label>
+                  <Label>Recipients</Label>
                   <Select
                     value={recipientType}
-                    onValueChange={(value: string) => setRecipientType(value)}
+                    onValueChange={(v) =>
+                      setRecipientType(v as typeof recipientType)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select recipient group" />
@@ -168,23 +155,21 @@ const Notifications = () => {
 
                 {recipientType === "centre_specific" && (
                   <div className="space-y-2">
-                    <Label htmlFor="centre">Select Centre</Label>
+                    <Label>Select Centre</Label>
                     <Select
                       value={selectedCentreId?.toString() || ""}
-                      onValueChange={(value) =>
-                        setSelectedCentreId(parseInt(value))
-                      }
+                      onValueChange={(v) => setSelectedCentreId(Number(v))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Centre" />
                       </SelectTrigger>
                       <SelectContent>
-                        {centres.map((centre) => (
+                        {centres.map((c) => (
                           <SelectItem
-                            key={centre.centre_id}
-                            value={centre.centre_id.toString()}
+                            key={c.centre_id}
+                            value={c.centre_id.toString()}
                           >
-                            {centre.centre_name}
+                            {c.centre_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -195,9 +180,8 @@ const Notifications = () => {
 
               {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
+                <Label>Title</Label>
                 <Input
-                  id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter notification title"
@@ -206,9 +190,8 @@ const Notifications = () => {
 
               {/* Message */}
               <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
+                <Label>Message</Label>
                 <Textarea
-                  id="message"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Enter your message here..."
@@ -216,21 +199,14 @@ const Notifications = () => {
                 />
               </div>
 
-              {/* Action Buttons */}
+              {/* Actions */}
               <div className="flex space-x-2">
-                <Button
-                  className="bg-gradient-primary hover:bg-primary-glow"
-                  onClick={sendNotification}
-                >
+                <Button onClick={sendNotification}>
                   <Send className="mr-2 h-4 w-4" />
                   Send Notification
                 </Button>
 
-                <Button
-                  variant="destructive"
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={clearNotifications}
-                >
+                <Button variant="destructive" onClick={clearNotifications}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Clear All Notifications
                 </Button>
@@ -243,4 +219,4 @@ const Notifications = () => {
   );
 };
 
-export default Notifications;
+export default NotificationsPageAdmin;
