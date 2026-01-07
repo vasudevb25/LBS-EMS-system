@@ -59,7 +59,7 @@ interface Stats {
 }
 
 /* ---------------- PAGE ---------------- */
-const isCentre = localStorage.getItem("is_admin") === "false";
+const isAdmin = localStorage.getItem("is_admin") === "true";
 
 const CoursesPage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -200,7 +200,7 @@ const CoursesPage = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Course Management</h1>
 
-        {isCentre && (
+        {isAdmin && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button onClick={openAddModal}>
@@ -343,7 +343,7 @@ const CourseTable = ({
           <TableHead>Duration</TableHead>
           <TableHead>Eligibility</TableHead>
           <TableHead>MOU</TableHead>
-          {isCentre && <TableHead>Actions</TableHead>}
+          {isAdmin && <TableHead>Actions</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -375,7 +375,7 @@ const CourseTable = ({
                   {c.mou_required ? "Required" : "No"}
                 </Badge>
               </TableCell>
-              {isCentre && (
+              {isAdmin && (
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
