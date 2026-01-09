@@ -47,7 +47,6 @@ const NotificationsPageAdmin = () => {
         console.error("Error fetching centres:", err);
       }
     };
-
     loadCentres();
   }, []);
 
@@ -64,28 +63,26 @@ const NotificationsPageAdmin = () => {
       return;
     }
 
-    const payload = {
-      recipient: recipientType,
-      subject: title.trim(),
-      message: message.trim(),
-      target_centre:
-        recipientType === "centre_specific" ? selectedCentreId : null,
-    };
-
     try {
       const data = await apiFetch("/api/notifications/send/", {
         method: "POST",
-        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient: recipientType,
+          subject: title.trim(),
+          message: message.trim(),
+          target_centre:
+            recipientType === "centre_specific" ? selectedCentreId : null,
+        }),
       });
 
-      alert(data?.status || "Notification sent successfully!");
+      alert(data.status || "Notification sent successfully");
 
       setTitle("");
       setMessage("");
       setSelectedCentreId(null);
       setRecipientType("all_centres");
     } catch (err: any) {
-      console.error("Failed to send notification:", err);
       alert(err.message || "Failed to send notification");
     }
   };
@@ -93,32 +90,22 @@ const NotificationsPageAdmin = () => {
   /* ---------------- CLEAR NOTIFICATIONS ---------------- */
 
   const clearNotifications = async () => {
-    if (!confirm("Are you sure you want to delete all notifications?")) return;
+    if (!confirm("Delete ALL notifications?")) return;
 
     try {
       const data = await apiFetch("/api/notifications/clear/", {
         method: "DELETE",
       });
 
-      alert(data?.status || "All notifications deleted.");
+      alert(data.status || "Notifications cleared");
     } catch (err: any) {
-      console.error("Failed to delete notifications:", err);
-      alert(err.message || "Failed to delete notifications");
+      alert(err.message || "Failed to clear notifications");
     }
   };
 
-  /* ---------------- RENDER ---------------- */
-
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Notification Center
-        </h1>
-        <p className="text-muted-foreground">
-          Send announcements, reminders, and alerts to centres.
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold">Notification Center</h1>
 
       <Tabs defaultValue="compose">
         <TabsContent value="compose">
@@ -126,89 +113,70 @@ const NotificationsPageAdmin = () => {
             <CardHeader>
               <CardTitle>Compose Notification</CardTitle>
               <CardDescription>
-                Send notifications to all centres or a specific centre.
+                Send notifications to all centres or one centre.
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {/* Recipient */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Recipients</Label>
+              <Label>Recipients</Label>
+              <Select
+                value={recipientType}
+                onValueChange={(v) =>
+                  setRecipientType(v as "all_centres" | "centre_specific")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_centres">All Centres</SelectItem>
+                  <SelectItem value="centre_specific">
+                    Centre Specific
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              {recipientType === "centre_specific" && (
+                <>
+                  <Label>Select Centre</Label>
                   <Select
-                    value={recipientType}
-                    onValueChange={(v) =>
-                      setRecipientType(v as typeof recipientType)
-                    }
+                    value={selectedCentreId?.toString() || ""}
+                    onValueChange={(v) => setSelectedCentreId(Number(v))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select recipient group" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all_centres">All Centres</SelectItem>
-                      <SelectItem value="centre_specific">
-                        Centre Specific
-                      </SelectItem>
+                      {centres.map((c) => (
+                        <SelectItem
+                          key={c.centre_id}
+                          value={String(c.centre_id)}
+                        >
+                          {c.centre_name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </>
+              )}
 
-                {recipientType === "centre_specific" && (
-                  <div className="space-y-2">
-                    <Label>Select Centre</Label>
-                    <Select
-                      value={selectedCentreId?.toString() || ""}
-                      onValueChange={(v) => setSelectedCentreId(Number(v))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Centre" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {centres.map((c) => (
-                          <SelectItem
-                            key={c.centre_id}
-                            value={c.centre_id.toString()}
-                          >
-                            {c.centre_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
+              <Label>Title</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
 
-              {/* Title */}
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter notification title"
-                />
-              </div>
+              <Label>Message</Label>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+              />
 
-              {/* Message */}
-              <div className="space-y-2">
-                <Label>Message</Label>
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Enter your message here..."
-                  rows={4}
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button onClick={sendNotification}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Send Notification
+                  <Send className="mr-2 h-4 w-4" /> Send
                 </Button>
 
                 <Button variant="destructive" onClick={clearNotifications}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Clear All Notifications
+                  <Trash2 className="mr-2 h-4 w-4" /> Clear All
                 </Button>
               </div>
             </CardContent>
