@@ -36,7 +36,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/overlays";
-import { Plus, MoreHorizontal, Edit, Trash, Clock } from "lucide-react";
+import {
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash,
+  Clock,
+  FileText,
+} from "lucide-react";
 import { apiFetch } from "../lib/api";
 
 /* ---------------- TYPES ---------------- */
@@ -49,6 +56,7 @@ interface Course {
   duration: string;
   eligibility: string;
   mou_required: boolean;
+  fee: number;
   created_at: string;
 }
 
@@ -57,6 +65,9 @@ interface Stats {
   career_courses: number;
   certificate_courses: number;
 }
+
+const RoyalityPercentage = 25 / 100;
+const GST = 18 / 100;
 
 /* ---------------- PAGE ---------------- */
 const isAdmin = localStorage.getItem("is_admin") === "true";
@@ -78,6 +89,7 @@ const CoursesPage = () => {
     stream: "Career",
     duration: "",
     eligibility: "",
+    fee: 0,
     mou_required: false,
   });
   /* ---------------- FETCH ---------------- */
@@ -136,6 +148,7 @@ const CoursesPage = () => {
       stream: "Career",
       duration: "",
       eligibility: "",
+      fee: 0,
       mou_required: false,
     });
     setOpen(true);
@@ -149,6 +162,7 @@ const CoursesPage = () => {
       stream: course.stream,
       duration: course.duration,
       eligibility: course.eligibility,
+      fee: course.fee,
       mou_required: course.mou_required,
     });
     setOpen(true);
@@ -216,46 +230,78 @@ const CoursesPage = () => {
                 </DialogTitle>
               </DialogHeader>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  name="course_name"
-                  placeholder="Course Name"
-                  value={formData.course_name}
-                  onChange={handleInputChange}
-                  required
-                />
+              <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Course Name
+                  </label>
+                  <Input
+                    name="course_name"
+                    value={formData.course_name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Course Code
+                  </label>
+                  <Input
+                    name="course_code"
+                    value={formData.course_code}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
 
-                <Input
-                  name="course_code"
-                  placeholder="Course Code"
-                  value={formData.course_code}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Stream
+                  </label>
+                  <select
+                    name="stream"
+                    value={formData.stream}
+                    onChange={handleInputChange}
+                    className="border rounded-md w-full p-2"
+                  >
+                    <option value="Career">Career</option>
+                    <option value="Certificate">Certificate</option>
+                  </select>
+                </div>
 
-                <select
-                  name="stream"
-                  value={formData.stream}
-                  onChange={handleInputChange}
-                  className="border rounded-md w-full p-2"
-                >
-                  <option value="Career">Career</option>
-                  <option value="Certificate">Certificate</option>
-                </select>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Duration
+                  </label>
+                  <Input
+                    name="duration"
+                    value={formData.duration}
+                    onChange={handleInputChange}
+                  />
+                </div>
 
-                <Input
-                  name="duration"
-                  placeholder="Duration"
-                  value={formData.duration}
-                  onChange={handleInputChange}
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Eligibility
+                  </label>
+                  <Input
+                    name="eligibility"
+                    value={formData.eligibility}
+                    onChange={handleInputChange}
+                  />
+                </div>
 
-                <Input
-                  name="eligibility"
-                  placeholder="Eligibility"
-                  value={formData.eligibility}
-                  onChange={handleInputChange}
-                />
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Lumpsum Fee
+                  </label>
+                  <Input
+                    name="fee"
+                    value={formData.fee}
+                    type="number"
+                    onChange={handleInputChange}
+                  />
+                </div>
 
                 <div className="flex items-center space-x-2">
                   <input
@@ -264,10 +310,10 @@ const CoursesPage = () => {
                     checked={formData.mou_required}
                     onChange={handleInputChange}
                   />
-                  <label>MOU Required</label>
+                  <label className="text-sm">MOU Required</label>
                 </div>
 
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full mt-2">
                   {editingCourse ? "Update" : "Save"}
                 </Button>
               </form>
@@ -278,12 +324,45 @@ const CoursesPage = () => {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Courses" value={stats?.total_courses} />
-        <StatCard title="Career Courses" value={stats?.career_courses} />
-        <StatCard
-          title="Certificate Courses"
-          value={stats?.certificate_courses}
-        />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm text-muted-foreground">
+              Total Courses
+            </CardTitle>
+            <FileText className="h-7 w-7 text" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold">
+              {stats?.total_courses ?? "-"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm text-muted-foreground">
+              Career Courses
+            </CardTitle>
+            <FileText className="h-7 w-7 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-primary">
+              {stats?.career_courses ?? "-"}
+            </div>
+          </CardContent>
+        </Card>{" "}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm text-muted-foreground">
+              Certificate Courses
+            </CardTitle>
+            <FileText className="h-7 w-7 text-accent" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-accent">
+              {stats?.certificate_courses ?? "-"}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
@@ -315,17 +394,6 @@ const CoursesPage = () => {
 
 /* ---------------- COMPONENTS ---------------- */
 
-const StatCard = ({ title, value }: { title: string; value?: number }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value ?? "-"}</div>
-    </CardContent>
-  </Card>
-);
-
 const CourseTable = ({
   courses,
   onEdit,
@@ -342,6 +410,7 @@ const CourseTable = ({
           <TableHead>Course</TableHead>
           <TableHead>Duration</TableHead>
           <TableHead>Eligibility</TableHead>
+          <TableHead>Fees</TableHead>
           <TableHead>MOU</TableHead>
           {isAdmin && <TableHead>Actions</TableHead>}
         </TableRow>
@@ -360,19 +429,37 @@ const CourseTable = ({
           courses.map((c) => (
             <TableRow key={c.course_id}>
               <TableCell>
-                <div className="font-medium">{c.course_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {c.course_code}
+                <div className="space-y-1">
+                  <div className="font-medium">{c.course_name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Code: {c.course_code}
+                  </div>
                 </div>
               </TableCell>
               <TableCell>
-                <Clock className="inline h-3 w-3 mr-1" />
-                {c.duration}
+                <div className="flex items-center space-x-1">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-sm">{c.duration}</span>
+                </div>
               </TableCell>
-              <TableCell>{c.eligibility}</TableCell>
+              <TableCell className="text-xs text-muted-foreground">
+                {c.eligibility}
+              </TableCell>{" "}
+              <TableCell>
+                <div className="space-y-1 text-xs">
+                  <div>Lumpsum fees: ₹ {c.fee > 0 ? c.fee : 0}</div>
+                  <div>Royality: ₹{RoyalityPercentage * c.fee}</div>
+                  <div>GST: ₹{GST * (RoyalityPercentage * c.fee)}</div>
+                  <div>
+                    Registration fees: ₹
+                    {RoyalityPercentage * c.fee +
+                      GST * (RoyalityPercentage * c.fee)}
+                  </div>
+                </div>
+              </TableCell>
               <TableCell>
                 <Badge variant={c.mou_required ? "default" : "secondary"}>
-                  {c.mou_required ? "Required" : "No"}
+                  {c.mou_required ? "Required" : "Not Required"}
                 </Badge>
               </TableCell>
               {isAdmin && (

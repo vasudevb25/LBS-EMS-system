@@ -60,6 +60,7 @@ interface Stats {
   total_centres: number;
   active_centres: number;
   expiring_soon: number;
+  expired_centres: number;
   total_students: number;
 }
 
@@ -122,6 +123,36 @@ const CentresPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const getValidityStatus = (endDate: string) => {
+    const today = new Date();
+    const expiry = new Date(endDate);
+
+    const oneMonthBeforeExpiry = new Date(expiry);
+    oneMonthBeforeExpiry.setMonth(oneMonthBeforeExpiry.getMonth() - 1);
+
+    const diffMs = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (today > expiry) {
+      return {
+        label: "Expired",
+        variant: "destructive" as const,
+      };
+    }
+
+    if (today >= oneMonthBeforeExpiry) {
+      return {
+        label: `Expiring in ${diffDays} day${diffDays !== 1 ? "s" : ""}`,
+        variant: "warning" as const,
+      };
+    }
+
+    return {
+      label: "Active",
+      variant: "default" as const,
+    };
   };
 
   /* ---------- SAVE ---------- */
@@ -234,7 +265,23 @@ const CentresPage = () => {
                   onChange={handleChange}
                   required
                 />
-                <Button type="submit">{editing ? "Update" : "Save"}</Button>
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                  value={form.email || ""}
+                  onChange={handleChange}
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">{editing ? "Update" : "Save"}</Button>
+                </div>
               </form>
             </DialogContent>
           </Dialog>
@@ -242,7 +289,7 @@ const CentresPage = () => {
       </div>
 
       {/* ---------- STATS CARDS ---------- */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">
@@ -285,7 +332,21 @@ const CentresPage = () => {
             <div className="text-2xl font-bold text-warning">
               {stats?.expiring_soon ?? 0}
             </div>
-            <p className="text-xs text-muted-foreground">Within 3 months</p>
+            <p className="text-xs text-muted-foreground">Within 1 month</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">
+              Expired
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+              {stats?.expired_centres ?? 0}
+            </div>
+            <p className="text-xs text-muted-foreground">Inactive centres</p>
           </CardContent>
         </Card>
 
@@ -340,13 +401,40 @@ const CentresPage = () => {
               )}
               {filtered.map((c) => (
                 <TableRow key={c.centre_id}>
-                  <TableCell>{c.centre_name}</TableCell>
-                  <TableCell>{c.location}</TableCell>
                   <TableCell>
-                    {c.validity_start_date} – {c.validity_end_date}
+                    <div className="space-y-1">
+                      <div className="font-medium">{c.centre_name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        ID: {c.centre_id}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge>{c.is_active ? "Active" : "Inactive"}</Badge>
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-sm">{c.location}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {c.district}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-1 text-sm">
+                      <Calendar className="h-3 w-3 text-muted-foreground" />
+                      <span>
+                        {c.validity_start_date} to {c.validity_end_date}
+                      </span>
+                    </div>
+                  </TableCell>
+
+                  <TableCell>
+                    {(() => {
+                      const status = getValidityStatus(c.validity_end_date);
+
+                      return (
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      );
+                    })()}
                   </TableCell>
 
                   {isAdmin && (

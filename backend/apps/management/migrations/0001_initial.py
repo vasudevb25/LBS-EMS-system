@@ -38,6 +38,7 @@ class Migration(migrations.Migration):
                 ('duration', models.CharField(max_length=50)),
                 ('eligibility', models.TextField(blank=True, null=True)),
                 ('mou_required', models.BooleanField()),
+                ('fee', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True, db_column='created_at')),
             ],
             options={

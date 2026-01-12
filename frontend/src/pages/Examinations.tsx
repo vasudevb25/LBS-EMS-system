@@ -39,6 +39,7 @@ import {
   ClipboardCheck,
   Edit,
   Trash,
+  Users,
 } from "lucide-react";
 import {
   Dialog,
@@ -59,8 +60,12 @@ interface Exam {
   exam_date: string;
   exam_start_time: string;
   exam_end_time: string;
-  course_name: string;
-  centre_name: string;
+  course: number; // ID
+  centre: number; // ID
+
+  // derived fields (frontend only)
+  course_name?: string;
+  centre_name?: string;
 }
 
 interface ExamStats {
@@ -70,29 +75,19 @@ interface ExamStats {
   total_available: number;
 }
 
-/* ---------------- STAT CARD ---------------- */
-
-const StatCard = ({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value?: number;
-  icon: JSX.Element;
-}) => (
-  <Card>
-    <CardHeader className="flex justify-between pb-2">
-      <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-      {icon}
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value ?? 0}</div>
-    </CardContent>
-  </Card>
-);
-
 /* ---------------- COMPONENT ---------------- */
+
+const calculateDuration = (startTime: string, endTime: string): string => {
+  if (!startTime || !endTime) return "";
+  const [startHour, startMin] = startTime.split(":").map(Number);
+  const [endHour, endMin] = endTime.split(":").map(Number);
+  const startTotalMin = startHour * 60 + startMin;
+  const endTotalMin = endHour * 60 + endMin;
+  const durationMin = endTotalMin - startTotalMin;
+  const hours = Math.floor(durationMin / 60);
+  const mins = durationMin % 60;
+  return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+};
 
 const ExaminationsPage = () => {
   const isAdmin = localStorage.getItem("is_admin") === "true";
@@ -122,18 +117,30 @@ const ExaminationsPage = () => {
     centre_name: "",
   });
 
+  const courseMap = Object.fromEntries(
+    courses.map((c) => [c.course_id, c.course_name])
+  );
+
+  const centreMap = Object.fromEntries(
+    centres.map((c) => [c.centre_id, c.centre_name])
+  );
+
   /* ---------------- FETCH ---------------- */
 
   const fetchExams = async () => {
     try {
       setLoadingExams(true);
+
       const data = await apiFetch("/api/examinations/");
-      setExams(
-        data.map((e: any) => ({
-          ...e,
-          exam_id: e.exam_id ?? e.id,
-        }))
-      );
+
+      const enriched = data.map((e: any) => ({
+        ...e,
+        exam_id: e.exam_id ?? e.id,
+        course_name: courseMap[e.course] ?? "Unknown Course",
+        centre_name: centreMap[e.centre] ?? "Unknown Centre",
+      }));
+
+      setExams(enriched);
     } catch (err: any) {
       setErrorExams(err.message || "Failed to load exams");
     } finally {
@@ -164,10 +171,14 @@ const ExaminationsPage = () => {
   };
 
   useEffect(() => {
-    fetchExams();
-    fetchStats();
-    fetchCourses();
-    fetchCentres();
+    const loadAll = async () => {
+      await fetchCourses();
+      await fetchCentres();
+      await fetchExams();
+      fetchStats();
+    };
+
+    loadAll();
   }, []);
 
   /* ---------------- CRUD ---------------- */
@@ -223,8 +234,8 @@ const ExaminationsPage = () => {
     return (
       e.exam_name.toLowerCase().includes(q) ||
       e.subject_code.toLowerCase().includes(q) ||
-      e.course_name.toLowerCase().includes(q) ||
-      e.centre_name.toLowerCase().includes(q)
+      (e.course_name ?? "").toLowerCase().includes(q) ||
+      (e.centre_name ?? "").toLowerCase().includes(q)
     );
   });
 
@@ -367,26 +378,62 @@ const ExaminationsPage = () => {
         <div className="text-destructive">{errorStats}</div>
       ) : (
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard
-            title="Scheduled"
-            value={stats?.scheduled_exams_this_month}
-            icon={<Calendar />}
-          />
-          <StatCard
-            title="Regular"
-            value={stats?.total_regular}
-            icon={<FileText />}
-          />
-          <StatCard
-            title="Supplementary"
-            value={stats?.total_supply}
-            icon={<ClipboardCheck />}
-          />
-          <StatCard
-            title="Available"
-            value={stats?.total_available}
-            icon={<Award />}
-          />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Scheduled Exams
+              </CardTitle>
+              <Calendar className="h-7 w-7 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.scheduled_exams_this_month ?? 0}
+              </div>
+              <p className="text-xs text-muted-foreground">This month</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Regular
+              </CardTitle>
+              <FileText className="h-7 w-7 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-primary">
+                {stats?.total_regular ?? 0}
+              </div>
+              <p className="text-xs text-muted-foreground">exams</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Supplementary
+              </CardTitle>
+              <ClipboardCheck className="h-7 w-7 text-success" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-success">
+                {stats?.total_supply ?? 0}
+              </div>
+              <p className="text-xs text-muted-foreground">exams</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Available
+              </CardTitle>
+              <Award className="h-7 w-7 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-accent">
+                {stats?.total_available ?? 0}
+              </div>
+              <p className="text-xs text-muted-foreground">exams</p>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -414,10 +461,12 @@ const ExaminationsPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Exam</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Exam Details</TableHead>
+                      <TableHead>Schedule</TableHead>
+                      <TableHead>Registration</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Centre</TableHead>
+                      {isAdmin && <TableHead>Actions</TableHead>}
                       <TableHead />
                     </TableRow>
                   </TableHeader>
@@ -432,12 +481,42 @@ const ExaminationsPage = () => {
                     {filteredExams.map((e) => (
                       <TableRow key={e.exam_id}>
                         <TableCell>
-                          <div className="font-medium">{e.exam_name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {e.subject_code}
+                          <div className="space-y-1">
+                            <div className="font-medium">{e.exam_name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {e.course_name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Code: {e.subject_code}
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell>{e.exam_date}</TableCell>
+
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-sm">{e.exam_date}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {e.exam_start_time} •{" "}
+                              {calculateDuration(
+                                e.exam_start_time,
+                                e.exam_end_time
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-1">
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-sm">
+                              {/* {e.registeredStudents} */}
+                              students
+                            </span>
+                          </div>
+                        </TableCell>
+
                         <TableCell>
                           <Badge>{e.exam_type}</Badge>
                         </TableCell>
@@ -453,7 +532,16 @@ const ExaminationsPage = () => {
                               <DropdownMenuItem
                                 onClick={() => {
                                   setEditingId(e.exam_id);
-                                  setFormData({ ...e });
+                                  setFormData({
+                                    exam_name: e.exam_name,
+                                    subject_code: e.subject_code,
+                                    exam_type: e.exam_type,
+                                    exam_date: e.exam_date,
+                                    exam_start_time: e.exam_start_time,
+                                    exam_end_time: e.exam_end_time,
+                                    course_name: e.course_name ?? "",
+                                    centre_name: e.centre_name ?? "",
+                                  });
                                   setOpen(true);
                                 }}
                               >

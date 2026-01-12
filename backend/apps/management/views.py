@@ -48,13 +48,20 @@ class CentreStatsAPI(APIView):
 
     def get(self, request):
         today = date.today()
-        three_months_later = today + timedelta(days=90)
+        one_month = timedelta(days=30)
 
         return Response({
             "total_centres": Centre.objects.count(),
-            "active_centres": Centre.objects.filter(is_active=True).count(),
+            "active_centres": Centre.objects.filter(
+                validity_end_date__gte=today,
+                is_active=True
+            ).count(),
             "expiring_soon": Centre.objects.filter(
-                validity_end_date__lte=three_months_later,
-                validity_end_date__gte=today
+                validity_end_date__gte=today,
+                validity_end_date__lte=today + one_month,
+                is_active=True
+            ).count(),
+            "expired_centres": Centre.objects.filter(
+                validity_end_date__lt=today
             ).count(),
         })

@@ -10,7 +10,7 @@ import {
   FileText,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-const isAdmin = localStorage.getItem("isAdmin") === "true";
+const isAdmin = localStorage.getItem("is_admin") === "true";
 
 const navigationAdmin = [
   { name: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
@@ -27,7 +27,6 @@ const navigationAdmin = [
 ];
 
 export function Sidebar() {
-  // Filter navigation items based on admin status
   const filteredNavigation = navigationAdmin.filter((item) => {
     // Only show Reports for admin users
     if (item.name === "Reports" && !isAdmin) {
