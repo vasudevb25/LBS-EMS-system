@@ -16,18 +16,20 @@ const Login = () => {
     setError("");
 
     try {
-      // apiFetch RETURNS DATA, NOT Response
-      const data = await apiFetch(`/api/login/`, {
+      const data = await apiFetch("/api/login/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
-      // Store auth info
+      // 🔐 JWT STORAGE
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
+
+      // UI helpers (NOT auth)
       localStorage.setItem("username", data.username);
       localStorage.setItem("is_admin", String(data.is_admin));
+      localStorage.setItem("role", data.role);
 
-      // Redirect
       navigate("/app/dashboard", { replace: true });
     } catch (err: any) {
       console.error("Login failed:", err);
@@ -68,6 +70,8 @@ const Login = () => {
   );
 };
 
+export default Login;
+
 const StyledWrapper = styled.div`
   display: flex;
   justify-content: center;
@@ -83,9 +87,13 @@ const StyledWrapper = styled.div`
     border-radius: 20px;
     padding: 30px;
     border: 1px solid #ddd;
-    box-shadow: 0 10px 30px rgba(16, 137, 211, 0.1),
+    box-shadow:
+      0 10px 30px rgba(16, 137, 211, 0.1),
       0 4px 6px rgba(16, 137, 211, 0.05);
-    transition: background 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+    transition:
+      background 0.3s ease,
+      box-shadow 0.3s ease,
+      border 0.3s ease;
   }
 
   .heading {
@@ -157,7 +165,8 @@ const StyledWrapper = styled.div`
     .container {
       background: #2c2c2c;
       border: 1px solid #444;
-      box-shadow: 0 10px 30px rgba(79, 195, 247, 0.1),
+      box-shadow:
+        0 10px 30px rgba(79, 195, 247, 0.1),
         0 4px 6px rgba(79, 195, 247, 0.05);
     }
 
@@ -186,5 +195,3 @@ const StyledWrapper = styled.div`
     }
   }
 `;
-
-export default Login;

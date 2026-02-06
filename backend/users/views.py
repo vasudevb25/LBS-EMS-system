@@ -1,21 +1,19 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+from rest_framework_simplejwt.tokens import RefreshToken
 
-@method_decorator(csrf_exempt, name="dispatch")
+
 class LoginView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = [] 
+    permission_classes = [AllowAny]  # 🔥 THIS WAS THE BUG
 
     def post(self, request):
-        user = authenticate(
-            username=request.data.get("username"),
-            password=request.data.get("password"),
-        )
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        user = authenticate(username=username, password=password)
 
         if not user:
             return Response(
@@ -23,21 +21,25 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        login(request, user)
+        refresh = RefreshToken.for_user(user)
 
-        return Response({
-            "username": user.username,
-            "is_admin": user.is_staff,
-        })
+        is_admin = user.is_superuser
+        role = "Admin" if is_admin else "Centre"
+
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "username": user.username,
+                "is_admin": is_admin,
+                "role": role,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class LogoutView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        logout(request)
-        response = Response({"message": "Logged out"})
-        response.delete_cookie("sessionid")
-        response.delete_cookie("csrftoken")
-        return response
+        return Response({"message": "Logged out"})

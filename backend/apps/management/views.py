@@ -9,14 +9,12 @@ from datetime import date, timedelta
 from .models import Centre, Course
 from .serializers import CentreSerializer, CourseSerializer
 from .permissions import CentreCoursePermission
-from apps.common.auth import CsrfExemptSessionAuthentication
 
 
 class CentreViewSet(viewsets.ModelViewSet):
     queryset = Centre.objects.all().order_by("centre_name")
     serializer_class = CentreSerializer
     permission_classes = [CentreCoursePermission]
-    authentication_classes = [CsrfExemptSessionAuthentication]
 
     @action(detail=False, methods=["get"])
     def active(self, request):
@@ -39,12 +37,10 @@ class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [CentreCoursePermission]
-    authentication_classes = [CsrfExemptSessionAuthentication]
 
 
 class CentreStatsAPI(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [CsrfExemptSessionAuthentication]
 
     def get(self, request):
         today = date.today()

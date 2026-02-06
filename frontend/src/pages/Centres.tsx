@@ -89,7 +89,7 @@ const CentresPage = () => {
       ]);
 
       setCentres(
-        Array.isArray(centresData) ? centresData : centresData.results ?? []
+        Array.isArray(centresData) ? centresData : (centresData.results ?? []),
       );
 
       setStats(statsData);
@@ -163,7 +163,7 @@ const CentresPage = () => {
         {
           method: editing ? "PUT" : "POST",
           body: JSON.stringify(form),
-        }
+        },
       );
 
       setModalOpen(false);
@@ -190,7 +190,7 @@ const CentresPage = () => {
     (c) =>
       c.centre_name.toLowerCase().includes(search.toLowerCase()) ||
       c.location.toLowerCase().includes(search.toLowerCase()) ||
-      c.centre_code.toLowerCase().includes(search.toLowerCase())
+      c.centre_code.toLowerCase().includes(search.toLowerCase()),
   );
 
   /* ---------- UI ---------- */

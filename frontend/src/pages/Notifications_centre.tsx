@@ -30,14 +30,17 @@ interface Notification {
 
 const NotificationsPageCentre = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [centreId] = useState<number>(2); // Replace with logged-in centre ID
+  const centreId = Number(localStorage.getItem("centre_id")); // or inject later
 
-  // Fetch notifications from API
-  const fetchNotifications = () => {
-    apiFetch(`/api/notifications/history/?centre_id=${centreId}`)
-      .then((res) => res.json())
-      .then((data) => setNotifications(data))
-      .catch((err) => console.error("Error fetching notifications:", err));
+  const fetchNotifications = async () => {
+    try {
+      const data = await apiFetch(
+        `/api/notifications/history/?centre_id=${centreId}`,
+      );
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    }
   };
 
   useEffect(() => {

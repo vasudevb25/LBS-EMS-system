@@ -70,9 +70,9 @@ const RoyalityPercentage = 25 / 100;
 const GST = 18 / 100;
 
 /* ---------------- PAGE ---------------- */
-const isAdmin = localStorage.getItem("is_admin") === "true";
-
 const CoursesPage = () => {
+  const isAdmin = localStorage.getItem("is_admin") === "true";
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [careerCourses, setCareerCourses] = useState<Course[]>([]);
   const [certificateCourses, setCertificateCourses] = useState<Course[]>([]);
@@ -128,7 +128,7 @@ const CoursesPage = () => {
   /* ---------------- FORM ---------------- */
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
     const checked =
@@ -377,14 +377,16 @@ const CoursesPage = () => {
             courses={careerCourses}
             onEdit={openEditModal}
             onDelete={deleteCourse}
+            isAdmin={isAdmin}
           />
         </TabsContent>
 
         <TabsContent value="certificate">
           <CourseTable
-            courses={certificateCourses}
+            courses={careerCourses}
             onEdit={openEditModal}
             onDelete={deleteCourse}
+            isAdmin={isAdmin}
           />
         </TabsContent>
       </Tabs>
@@ -398,10 +400,12 @@ const CourseTable = ({
   courses,
   onEdit,
   onDelete,
+  isAdmin,
 }: {
   courses: Course[];
   onEdit: (c: Course) => void;
   onDelete: (id: number) => void;
+  isAdmin: boolean;
 }) => (
   <div className="border rounded-lg overflow-y-auto max-h-[500px]">
     <Table>

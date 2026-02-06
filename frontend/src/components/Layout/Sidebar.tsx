@@ -10,7 +10,6 @@ import {
   FileText,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-const isAdmin = localStorage.getItem("is_admin") === "true";
 
 const navigationAdmin = [
   { name: "Dashboard", href: "/app/dashboard", icon: LayoutDashboard },
@@ -27,8 +26,17 @@ const navigationAdmin = [
 ];
 
 export function Sidebar() {
+  // 🔐 Read auth state at render time (JWT-safe)
+  const isAdmin = localStorage.getItem("is_admin") === "true";
+  const access = localStorage.getItem("access");
+
+  // If no token, sidebar should not render at all
+  if (!access) {
+    return null;
+  }
+
   const filteredNavigation = navigationAdmin.filter((item) => {
-    // Only show Reports for admin users
+    // Reports = admin only
     if (item.name === "Reports" && !isAdmin) {
       return false;
     }
@@ -39,14 +47,16 @@ export function Sidebar() {
     <div className={cn("pb-12 w-64")}>
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
-          <div className="flex items-center space-x-2 mb-6">
-            <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">
-                LBS
-              </span>
-            </div>
+          <div className="flex items-center space-x-3 mb-6">
+            <img
+              src="/image.png"
+              alt="EMS Logo"
+              className="h-20 w-20 object-contain"
+            />
             <div>
-              <h2 className="text-lg font-semibold">EMS Admin</h2>
+              <h2 className="text-lg font-semibold">
+                {isAdmin ? "EMS Admin" : "EMS Centre"}
+              </h2>
             </div>
           </div>
 
@@ -64,7 +74,7 @@ export function Sidebar() {
                       "flex items-center space-x-2 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:text-accent-foreground",
                       isActive
                         ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "text-muted-foreground"
+                        : "text-muted-foreground",
                     )
                   }
                 >

@@ -118,11 +118,11 @@ const ExaminationsPage = () => {
   });
 
   const courseMap = Object.fromEntries(
-    courses.map((c) => [c.course_id, c.course_name])
+    courses.map((c) => [c.course_id, c.course_name]),
   );
 
   const centreMap = Object.fromEntries(
-    centres.map((c) => [c.centre_id, c.centre_name])
+    centres.map((c) => [c.centre_id, c.centre_name]),
   );
 
   /* ---------------- FETCH ---------------- */
@@ -502,7 +502,7 @@ const ExaminationsPage = () => {
                               {e.exam_start_time} •{" "}
                               {calculateDuration(
                                 e.exam_start_time,
-                                e.exam_end_time
+                                e.exam_end_time,
                               )}
                             </div>
                           </div>

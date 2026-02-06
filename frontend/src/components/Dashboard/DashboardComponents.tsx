@@ -53,7 +53,7 @@ export function StatsCard({
             <span
               className={cn(
                 "text-xs font-medium",
-                trend.value > 0 ? "text-success" : "text-destructive"
+                trend.value > 0 ? "text-success" : "text-destructive",
               )}
             >
               {trend.value > 0 ? "+" : ""}
@@ -96,7 +96,7 @@ export function ModuleCard({
     <Card
       className={cn(
         "group transition-all duration-300 hover:shadow-glow hover:-translate-y-1 cursor-pointer",
-        className
+        className,
       )}
       onClick={() => link !== "#" && navigate(link)}
     >
@@ -147,8 +147,8 @@ interface Course {
 
 interface Exam {
   exam_id: number;
-  exam_name: string;
-  centre_name: string;
+  exam_name?: string;
+  exam_type?: string;
   created_at: string;
 }
 
@@ -193,14 +193,22 @@ export function RecentActivity() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const load = async () => {
       try {
-        const [centres, courses, exams]: [Centre[], Course[], Exam[]] =
-          await Promise.all([
-            apiFetch("/api/centres/"),
-            apiFetch("/api/courses/"),
-            apiFetch("/api/examinations/"),
-          ]);
+        const results = await Promise.allSettled([
+          apiFetch("/api/centres/"),
+          apiFetch("/api/courses/"),
+          apiFetch("/api/examinations/"),
+        ]);
+
+        const centres: Centre[] =
+          results[0].status === "fulfilled" ? results[0].value : [];
+        const courses: Course[] =
+          results[1].status === "fulfilled" ? results[1].value : [];
+        const exams: Exam[] =
+          results[2].status === "fulfilled" ? results[2].value : [];
 
         const combined: Activity[] = [
           ...centres.map((c) => ({
@@ -225,26 +233,28 @@ export function RecentActivity() {
             id: `exam-${e.exam_id}`,
             type: "exam" as const,
             title: "Exam Scheduled",
-            description: e.exam_name,
+            description: e.exam_name ?? e.exam_type ?? "Exam scheduled",
             created_at: e.created_at,
             timeAgo: getTimeAgo(e.created_at),
             badgeText: "Exam",
           })),
         ].sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
 
-        setActivities(combined);
+        if (mounted) setActivities(combined);
       } catch (err: any) {
-        console.error(err);
-        setError(err.message || "Failed to load activity");
+        if (mounted) setError(err.message || "Failed to load activity");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     load();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const items = useMemo(
@@ -264,7 +274,7 @@ export function RecentActivity() {
           </div>
         </div>
       )),
-    [activities]
+    [activities],
   );
 
   return (

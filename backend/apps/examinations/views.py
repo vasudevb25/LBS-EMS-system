@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -7,19 +7,16 @@ from django.utils import timezone
 from .models import Examination
 from .serializers import ExaminationSerializer
 from .permissions import ExaminationPermission
-from apps.common.auth import CsrfExemptSessionAuthentication
 
 
 class ExaminationViewSet(viewsets.ModelViewSet):
     queryset = Examination.objects.all().order_by("-created_at")
     serializer_class = ExaminationSerializer
     permission_classes = [ExaminationPermission]
-    authentication_classes = [CsrfExemptSessionAuthentication]
 
 
 class ExamStatsAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [CsrfExemptSessionAuthentication]
 
     def get(self, request):
         today = timezone.now()
