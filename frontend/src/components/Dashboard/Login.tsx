@@ -4,11 +4,14 @@ import styled from "styled-components";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../../lib/api";
+import { useToast } from "../../components/ui/use-toast";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { toast } = useToast();
+
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -16,19 +19,31 @@ const Login = () => {
     setError("");
 
     try {
-      // apiFetch RETURNS DATA, NOT Response
-      const data = await apiFetch(`/api/login/`, {
+      const data = await apiFetch("/api/login/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
-      // Store auth info
+      // 🔐 AUTH STORAGE
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
+
+      // UI helpers
       localStorage.setItem("username", data.username);
       localStorage.setItem("is_admin", String(data.is_admin));
+      localStorage.setItem("role", data.role);
 
-      // Redirect
-      navigate("/app/dashboard", { replace: true });
+      // ✅ SUCCESS TOAST
+      toast({
+        title: "Authentication successful",
+        description: `Welcome back, ${data.username}`,
+        variant: "success",
+      });
+
+      // ⏳ short pause → dashboard
+      setTimeout(() => {
+        navigate("/app/dashboard", { replace: true });
+      }, 900);
     } catch (err: any) {
       console.error("Login failed:", err);
       setError(err?.message || "Invalid credentials");
@@ -68,6 +83,10 @@ const Login = () => {
   );
 };
 
+export default Login;
+
+/* ---------------- STYLES ---------------- */
+
 const StyledWrapper = styled.div`
   display: flex;
   justify-content: center;
@@ -75,7 +94,6 @@ const StyledWrapper = styled.div`
   min-height: 100vh;
   width: 100vw;
   background: #eef2f5;
-  transition: background 0.3s ease;
 
   .container {
     max-width: 350px;
@@ -83,9 +101,9 @@ const StyledWrapper = styled.div`
     border-radius: 20px;
     padding: 30px;
     border: 1px solid #ddd;
-    box-shadow: 0 10px 30px rgba(16, 137, 211, 0.1),
+    box-shadow:
+      0 10px 30px rgba(16, 137, 211, 0.1),
       0 4px 6px rgba(16, 137, 211, 0.05);
-    transition: background 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
   }
 
   .heading {
@@ -94,8 +112,8 @@ const StyledWrapper = styled.div`
     font-size: 28px;
     color: rgb(16, 137, 211);
     margin-bottom: 5px;
-    transition: color 0.3s ease;
   }
+
   .error-message {
     color: #e63946;
     background: rgba(230, 57, 70, 0.1);
@@ -115,20 +133,11 @@ const StyledWrapper = styled.div`
     border-radius: 12px;
     margin-top: 12px;
     box-shadow: #cff0ff 0px 5px 10px -5px;
-    border-inline: 2px solid transparent;
-    transition: all 0.3s ease;
   }
 
   .form .input:focus {
     outline: none;
     border-inline: 2px solid #12b1d1;
-  }
-
-  .form .forgot-password a {
-    font-size: 12px;
-    color: #0099ff;
-    text-decoration: none;
-    transition: color 0.3s ease;
   }
 
   .form .login-button {
@@ -147,18 +156,14 @@ const StyledWrapper = styled.div`
     box-shadow: rgba(16, 137, 211, 0.4) 0px 10px 20px -10px;
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
   }
 
-  /* DARK MODE */
   .dark & {
     background: #1e1e1e;
 
     .container {
       background: #2c2c2c;
       border: 1px solid #444;
-      box-shadow: 0 10px 30px rgba(79, 195, 247, 0.1),
-        0 4px 6px rgba(79, 195, 247, 0.05);
     }
 
     .heading {
@@ -168,23 +173,10 @@ const StyledWrapper = styled.div`
     .form .input {
       background: #3a3a3a;
       color: #fff;
-      box-shadow: 0 5px 10px rgba(79, 195, 247, 0.1);
-      border-inline: 2px solid transparent;
-    }
-
-    .form .input:focus {
-      border-inline: 2px solid #4fc3f7;
-    }
-
-    .form .forgot-password a {
-      color: #4fc3f7;
     }
 
     .form .login-button {
       background: linear-gradient(90deg, #4fc3f7 0%, #00bcd4 100%);
-      box-shadow: rgba(79, 195, 247, 0.4) 0px 10px 20px -10px;
     }
   }
 `;
-
-export default Login;

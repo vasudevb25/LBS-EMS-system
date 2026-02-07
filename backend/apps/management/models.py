@@ -25,6 +25,7 @@ class Course(models.Model):
     duration = models.CharField(max_length=50)
     eligibility = models.TextField(null=True, blank=True)
     mou_required = models.BooleanField()
+    fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     # syllabus_file_path = models.CharField(max_length=500, null=True, blank=True)
     # content_file_path = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')

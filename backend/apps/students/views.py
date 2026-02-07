@@ -7,8 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Student
 from .serializers import StudentSerializer
-from apps.students.permissions import StudentPermission
-from apps.common.auth import CsrfExemptSessionAuthentication
+from .permissions import StudentPermission
 
 
 class StudentViewSet(viewsets.ModelViewSet):
@@ -19,12 +18,10 @@ class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [StudentPermission]
-    authentication_classes = [CsrfExemptSessionAuthentication]
 
 
 class StudentStatsAPI(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [CsrfExemptSessionAuthentication]
 
     def get(self, request):
         one_month_ago = date.today() - timedelta(days=30)

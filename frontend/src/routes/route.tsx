@@ -24,10 +24,10 @@ const PrivateRoute = ({
   element: JSX.Element;
   adminOnly?: boolean;
 }) => {
-  const username = localStorage.getItem("username");
+  const access = localStorage.getItem("access");
   const isAdmin = localStorage.getItem("is_admin") === "true";
 
-  if (!username) {
+  if (!access) {
     return <Navigate to="/login" replace />;
   }
 
@@ -86,6 +86,12 @@ export const routes: RouteObject[] = [
 
 /* ---------- NOTIFICATIONS SWITCH ---------- */
 function NotificationsRouter() {
+  const access = localStorage.getItem("access");
   const isAdmin = localStorage.getItem("is_admin") === "true";
+
+  if (!access) {
+    return <Navigate to="/login" replace />;
+  }
+
   return isAdmin ? <NotificationsPageAdmin /> : <NotificationsPageCentre />;
 }

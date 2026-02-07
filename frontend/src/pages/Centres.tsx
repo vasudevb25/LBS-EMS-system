@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
-import React, { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/buttons";
 import {
   Card,
@@ -28,12 +29,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "../components/ui/menus";
 import {
   Plus,
-  Search,
   MoreHorizontal,
   Edit,
   Trash,
@@ -41,6 +40,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { apiFetch } from "../lib/api";
+import LoaderOverlay from "../components/ui/loadoverlay";
 
 /* ---------- TYPES ---------- */
 interface Centre {
@@ -60,6 +60,7 @@ interface Stats {
   total_centres: number;
   active_centres: number;
   expiring_soon: number;
+  expired_centres: number;
   total_students: number;
 }
 
@@ -71,6 +72,7 @@ const CentresPage = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Centre | null>(null);
@@ -88,7 +90,7 @@ const CentresPage = () => {
       ]);
 
       setCentres(
-        Array.isArray(centresData) ? centresData : centresData.results ?? []
+        Array.isArray(centresData) ? centresData : (centresData.results ?? []),
       );
 
       setStats(statsData);
@@ -117,11 +119,23 @@ const CentresPage = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const getValidityStatus = (endDate: string) => {
+    const today = new Date();
+    const expiry = new Date(endDate);
+    const oneMonthBefore = new Date(expiry);
+    oneMonthBefore.setMonth(oneMonthBefore.getMonth() - 1);
+
+    if (today > expiry)
+      return { label: "Expired", variant: "destructive" as const };
+
+    if (today >= oneMonthBefore)
+      return { label: "Expiring Soon", variant: "warning" as const };
+
+    return { label: "Active", variant: "default" as const };
   };
 
   /* ---------- SAVE ---------- */
@@ -132,9 +146,8 @@ const CentresPage = () => {
         {
           method: editing ? "PUT" : "POST",
           body: JSON.stringify(form),
-        }
+        },
       );
-
       setModalOpen(false);
       fetchData();
     } catch (err: any) {
@@ -145,13 +158,8 @@ const CentresPage = () => {
   /* ---------- DELETE ---------- */
   const deleteCentre = async (id: number) => {
     if (!confirm("Delete this centre?")) return;
-
-    try {
-      await apiFetch(`/api/centres/${id}/`, { method: "DELETE" });
-      fetchData();
-    } catch {
-      alert("Failed to delete centre");
-    }
+    await apiFetch(`/api/centres/${id}/`, { method: "DELETE" });
+    fetchData();
   };
 
   /* ---------- FILTER ---------- */
@@ -159,227 +167,206 @@ const CentresPage = () => {
     (c) =>
       c.centre_name.toLowerCase().includes(search.toLowerCase()) ||
       c.location.toLowerCase().includes(search.toLowerCase()) ||
-      c.centre_code.toLowerCase().includes(search.toLowerCase())
+      c.centre_code.toLowerCase().includes(search.toLowerCase()),
   );
 
   /* ---------- UI ---------- */
-  if (loading) return <div>Loading centres...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
-
   return (
-    <div className="space-y-6">
-      {/* ---------- HEADER ---------- */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Centre Management</h1>
+    <div className="relative">
+      {loading && <LoaderOverlay />}
 
-        {isAdmin && (
-          <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openAddModal}>
-                <Plus className="mr-2 h-4 w-4" /> Add Centre
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {editing ? "Edit Centre" : "Add Centre"}
-                </DialogTitle>
-              </DialogHeader>
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  saveCentre();
-                }}
-                className="space-y-4"
-              >
-                <Input
-                  name="centre_code"
-                  placeholder="Code"
-                  value={form.centre_code || ""}
-                  onChange={handleChange}
-                  required
-                />
-                <Input
-                  name="centre_name"
-                  placeholder="Name"
-                  value={form.centre_name || ""}
-                  onChange={handleChange}
-                  required
-                />
-                <Input
-                  name="location"
-                  placeholder="Location"
-                  value={form.location || ""}
-                  onChange={handleChange}
-                />
-                <Input
-                  name="district"
-                  placeholder="District"
-                  value={form.district || ""}
-                  onChange={handleChange}
-                />
-                <Input
-                  type="date"
-                  name="validity_start_date"
-                  value={form.validity_start_date || ""}
-                  onChange={handleChange}
-                  required
-                />
-                <Input
-                  type="date"
-                  name="validity_end_date"
-                  value={form.validity_end_date || ""}
-                  onChange={handleChange}
-                  required
-                />
-                <Button type="submit">{editing ? "Update" : "Save"}</Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+      <div className={loading ? "pointer-events-none select-none" : ""}>
+        {error && (
+          <div className="mb-4 text-destructive font-medium">{error}</div>
         )}
+
+        <div className="space-y-6">
+          {/* ---------- HEADER ---------- */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Centre Management</h1>
+
+            {isAdmin && (
+              <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={openAddModal}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Centre
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editing ? "Edit Centre" : "Add Centre"}
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      saveCentre();
+                    }}
+                    className="space-y-4"
+                  >
+                    <Input
+                      name="centre_code"
+                      placeholder="Code"
+                      value={form.centre_code || ""}
+                      onChange={handleChange}
+                      required
+                    />
+                    <Input
+                      name="centre_name"
+                      placeholder="Name"
+                      value={form.centre_name || ""}
+                      onChange={handleChange}
+                      required
+                    />
+                    <Input
+                      name="location"
+                      placeholder="Location"
+                      value={form.location || ""}
+                      onChange={handleChange}
+                    />
+                    <Input
+                      name="district"
+                      placeholder="District"
+                      value={form.district || ""}
+                      onChange={handleChange}
+                    />
+                    <Input
+                      type="date"
+                      name="validity_start_date"
+                      value={form.validity_start_date || ""}
+                      onChange={handleChange}
+                      required
+                    />
+                    <Input
+                      type="date"
+                      name="validity_end_date"
+                      value={form.validity_end_date || ""}
+                      onChange={handleChange}
+                      required
+                    />
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="Email"
+                      value={form.email || ""}
+                      onChange={handleChange}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setModalOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit">
+                        {editing ? "Update" : "Save"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+
+          {/* ---------- STATS ---------- */}
+          <div className="grid gap-4 md:grid-cols-5">
+            <StatCard title="Total Centres" value={stats?.total_centres} />
+            <StatCard title="Active Centres" value={stats?.active_centres} />
+            <StatCard title="Expiring Soon" value={stats?.expiring_soon} />
+            <StatCard title="Expired" value={stats?.expired_centres} />
+            <StatCard title="Total Students" value={stats?.total_students} />
+          </div>
+
+          {/* ---------- TABLE ---------- */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Centre Directory</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                placeholder="Search centres..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Centre</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Validity</TableHead>
+                    <TableHead>Status</TableHead>
+                    {isAdmin && <TableHead>Actions</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((c) => {
+                    const status = getValidityStatus(c.validity_end_date);
+                    return (
+                      <TableRow key={c.centre_id}>
+                        <TableCell>
+                          <div className="font-medium">{c.centre_name}</div>
+                        </TableCell>
+                        <TableCell>{c.location}</TableCell>
+                        <TableCell>
+                          {c.validity_start_date} → {c.validity_end_date}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={status.variant}>{status.label}</Badge>
+                        </TableCell>
+                        {isAdmin && (
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                <DropdownMenuItem
+                                  onClick={() => openEditModal(c)}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => deleteCentre(c.centre_id)}
+                                >
+                                  <Trash className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      {/* ---------- STATS CARDS ---------- */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Total Centres
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.total_centres ?? 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Across all districts
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Active Centres
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {stats?.active_centres ?? 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Currently operational
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Expiring Soon
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-warning">
-              {stats?.expiring_soon ?? 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Within 3 months</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">
-              Total Students
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.total_students ?? 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              All centres combined
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ---------- TABLE ---------- */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Centre Directory</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <Input
-            placeholder="Search centres..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Centre</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Validity</TableHead>
-                <TableHead>Status</TableHead>
-                {isAdmin && <TableHead>Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {centres.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={isAdmin ? 5 : 4} className="text-center">
-                    No centres found.
-                  </TableCell>
-                </TableRow>
-              )}
-              {filtered.map((c) => (
-                <TableRow key={c.centre_id}>
-                  <TableCell>{c.centre_name}</TableCell>
-                  <TableCell>{c.location}</TableCell>
-                  <TableCell>
-                    {c.validity_start_date} – {c.validity_end_date}
-                  </TableCell>
-                  <TableCell>
-                    <Badge>{c.is_active ? "Active" : "Inactive"}</Badge>
-                  </TableCell>
-
-                  {isAdmin && (
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost">
-                            <MoreHorizontal />
-                          </Button>
-                        </DropdownMenuTrigger>
-
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => openEditModal(c)}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => deleteCentre(c.centre_id)}
-                          >
-                            <Trash className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 };
 
 export default CentresPage;
+
+/* ---------- SMALL HELPER ---------- */
+function StatCard({ title, value }: { title: string; value?: number }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value ?? 0}</div>
+      </CardContent>
+    </Card>
+  );
+}

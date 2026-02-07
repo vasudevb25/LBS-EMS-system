@@ -1,29 +1,33 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const access = localStorage.getItem("access");
+
   const res = await fetch(`${API_URL}${endpoint}`, {
-    credentials: "include", // 🔐 session cookie always sent
+    ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(access ? { Authorization: `Bearer ${access}` } : {}),
       ...(options.headers || {}),
     },
-    ...options,
   });
 
-  // 🔥 Handle expired session globally
-  if (res.status === 401 || res.status === 403) {
+  // 🚨 Auto-logout ONLY for protected endpoints
+  if (res.status === 401 && endpoint !== "/api/login/") {
     localStorage.clear();
-    window.location.href = "/login";
-    throw new Error("Session expired");
+
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+
+    throw new Error("Unauthorized");
   }
 
-  // Handle non-JSON responses
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
-
+  // Normal error handling (including login failures)
   if (!res.ok) {
-    throw new Error(data?.error || "API Error");
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || "Invalid credentials");
   }
 
-  return data;
+  return res.json();
 }

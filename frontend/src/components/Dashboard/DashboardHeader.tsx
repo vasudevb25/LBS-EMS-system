@@ -15,8 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/menus";
 
-import { apiFetch } from "../../lib/api";
-
 interface UserState {
   username: string;
   isAdmin: boolean;
@@ -26,12 +24,13 @@ export function DashboardHeader() {
   const navigate = useNavigate();
   const [user, setUser] = useState<UserState | null>(null);
 
-  // 🔐 Load auth state once
   useEffect(() => {
+    const access = localStorage.getItem("access");
     const username = localStorage.getItem("username");
     const isAdminRaw = localStorage.getItem("is_admin");
 
-    if (!username || isAdminRaw === null) {
+    if (!access || !username || isAdminRaw === null) {
+      localStorage.clear();
       navigate("/login", { replace: true });
       return;
     }
@@ -42,71 +41,44 @@ export function DashboardHeader() {
     });
   }, [navigate]);
 
-  const handleLogout = async () => {
-    try {
-      await apiFetch(`/api/logout/`, {
-        method: "POST",
-      });
-    } finally {
-      localStorage.clear();
-      navigate("/login", { replace: true });
-    }
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login", { replace: true });
   };
 
-  // ⛔ Don’t render junk while redirecting
   if (!user) return null;
 
   return (
-    <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="flex h-16 items-center justify-between px-6">
-        {/* Logo */}
-        <div className="flex items-center space-x-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">
-              LBS
-            </span>
-          </div>
-          <h1 className="text-lg font-semibold">Education Management System</h1>
-        </div>
+    <header className="border-b bg-card/50 backdrop-blur px-4 py-2 flex items-center justify-between">
+      {/* Left */}
+      <div className="flex items-center gap-2">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search…" className="w-64" />
+      </div>
 
-        {/* Right Side */}
-        <div className="flex items-center space-x-4">
-          {/* Search */}
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search students, courses..."
-              className="pl-9 w-64"
-            />
-          </div>
+      {/* Right */}
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
 
-          <ThemeToggle />
+        <Button variant="ghost" size="icon">
+          <Bell className="h-5 w-5" />
+        </Button>
 
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <User className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
 
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>{user.username}</DropdownMenuLabel>
 
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                {user.isAdmin ? "Admin Account" : "Centre Account"}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>{user.username}</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

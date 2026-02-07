@@ -25,7 +25,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "../components/ui/menus";
 import { Input } from "../components/ui/inputs";
@@ -36,8 +35,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/overlays";
-import { Plus, MoreHorizontal, Edit, Trash, Clock } from "lucide-react";
+import {
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash,
+  Clock,
+  FileText,
+} from "lucide-react";
 import { apiFetch } from "../lib/api";
+import LoaderOverlay from "../components/ui/loadoverlay";
 
 /* ---------------- TYPES ---------------- */
 
@@ -49,6 +56,7 @@ interface Course {
   duration: string;
   eligibility: string;
   mou_required: boolean;
+  fee: number;
   created_at: string;
 }
 
@@ -58,14 +66,19 @@ interface Stats {
   certificate_courses: number;
 }
 
+const ROYALTY = 0.25;
+const GST = 0.18;
+
 /* ---------------- PAGE ---------------- */
-const isAdmin = localStorage.getItem("is_admin") === "true";
 
 const CoursesPage = () => {
+  const isAdmin = localStorage.getItem("is_admin") === "true";
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [careerCourses, setCareerCourses] = useState<Course[]>([]);
   const [certificateCourses, setCertificateCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,16 +91,18 @@ const CoursesPage = () => {
     stream: "Career",
     duration: "",
     eligibility: "",
+    fee: 0,
     mou_required: false,
   });
+
   /* ---------------- FETCH ---------------- */
 
   const fetchCourses = async () => {
     try {
       setLoading(true);
+      setError(null);
 
       const data: Course[] = await apiFetch("/api/courses/");
-
       setCourses(data);
 
       const career = data.filter((c) => c.stream === "Career");
@@ -102,7 +117,6 @@ const CoursesPage = () => {
         certificate_courses: certificate.length,
       });
     } catch (err: any) {
-      console.error(err);
       setError(err.message || "Failed to load courses");
     } finally {
       setLoading(false);
@@ -116,7 +130,7 @@ const CoursesPage = () => {
   /* ---------------- FORM ---------------- */
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
     const checked =
@@ -136,6 +150,7 @@ const CoursesPage = () => {
       stream: "Career",
       duration: "",
       eligibility: "",
+      fee: 0,
       mou_required: false,
     });
     setOpen(true);
@@ -143,197 +158,194 @@ const CoursesPage = () => {
 
   const openEditModal = (course: Course) => {
     setEditingCourse(course);
-    setFormData({
-      course_code: course.course_code,
-      course_name: course.course_name,
-      stream: course.stream,
-      duration: course.duration,
-      eligibility: course.eligibility,
-      mou_required: course.mou_required,
-    });
+    setFormData(course);
     setOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const method = editingCourse ? "PUT" : "POST";
-      const url = editingCourse
-        ? `/api/courses/${editingCourse.course_id}/`
-        : `/api/courses/`;
+    const url = editingCourse
+      ? `/api/courses/${editingCourse.course_id}/`
+      : `/api/courses/`;
 
-      await apiFetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+    await apiFetch(url, {
+      method: editingCourse ? "PUT" : "POST",
+      body: JSON.stringify(formData),
+    });
 
-      await fetchCourses();
-      setOpen(false);
-    } catch (err: any) {
-      alert(err.message || "Failed to save course");
-    }
+    setOpen(false);
+    fetchCourses();
   };
 
-  const deleteCourse = async (course_id: number) => {
+  const deleteCourse = async (id: number) => {
     if (!confirm("Delete this course?")) return;
-
-    try {
-      await apiFetch(`/api/courses/${course_id}/`, {
-        method: "DELETE",
-      });
-      await fetchCourses();
-    } catch (err: any) {
-      alert(err.message || "Failed to delete course");
-    }
+    await apiFetch(`/api/courses/${id}/`, { method: "DELETE" });
+    fetchCourses();
   };
 
   /* ---------------- UI ---------------- */
 
-  if (loading) return <div>Loading courses...</div>;
-  if (error) return <div>Error loading courses: {error}</div>;
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Course Management</h1>
+    <div className="relative">
+      {loading && <LoaderOverlay />}
 
-        {isAdmin && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openAddModal}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Course
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingCourse ? "Edit Course" : "Add Course"}
-                </DialogTitle>
-              </DialogHeader>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  name="course_name"
-                  placeholder="Course Name"
-                  value={formData.course_name}
-                  onChange={handleInputChange}
-                  required
-                />
-
-                <Input
-                  name="course_code"
-                  placeholder="Course Code"
-                  value={formData.course_code}
-                  onChange={handleInputChange}
-                  required
-                />
-
-                <select
-                  name="stream"
-                  value={formData.stream}
-                  onChange={handleInputChange}
-                  className="border rounded-md w-full p-2"
-                >
-                  <option value="Career">Career</option>
-                  <option value="Certificate">Certificate</option>
-                </select>
-
-                <Input
-                  name="duration"
-                  placeholder="Duration"
-                  value={formData.duration}
-                  onChange={handleInputChange}
-                />
-
-                <Input
-                  name="eligibility"
-                  placeholder="Eligibility"
-                  value={formData.eligibility}
-                  onChange={handleInputChange}
-                />
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="mou_required"
-                    checked={formData.mou_required}
-                    onChange={handleInputChange}
-                  />
-                  <label>MOU Required</label>
-                </div>
-
-                <Button type="submit" className="w-full">
-                  {editingCourse ? "Update" : "Save"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+      <div className={loading ? "pointer-events-none blur-sm" : ""}>
+        {error && (
+          <div className="mb-4 text-destructive font-medium">{error}</div>
         )}
+
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Course Management</h1>
+
+            {isAdmin && (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={openAddModal}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Course
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingCourse ? "Edit Course" : "Add Course"}
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <Input
+                      name="course_name"
+                      placeholder="Course Name"
+                      value={formData.course_name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <Input
+                      name="course_code"
+                      placeholder="Course Code"
+                      value={formData.course_code}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <select
+                      name="stream"
+                      value={formData.stream}
+                      onChange={handleInputChange}
+                      className="border rounded-md w-full p-2"
+                    >
+                      <option value="Career">Career</option>
+                      <option value="Certificate">Certificate</option>
+                    </select>
+                    <Input
+                      name="duration"
+                      placeholder="Duration"
+                      value={formData.duration}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      name="eligibility"
+                      placeholder="Eligibility"
+                      value={formData.eligibility}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      name="fee"
+                      type="number"
+                      placeholder="Fee"
+                      value={formData.fee}
+                      onChange={handleInputChange}
+                    />
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="mou_required"
+                        checked={formData.mou_required}
+                        onChange={handleInputChange}
+                      />
+                      MOU Required
+                    </label>
+
+                    <Button type="submit" className="w-full">
+                      {editingCourse ? "Update" : "Save"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+
+          {/* Stats */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <StatCard title="Total Courses" value={stats?.total_courses} />
+            <StatCard title="Career Courses" value={stats?.career_courses} />
+            <StatCard
+              title="Certificate Courses"
+              value={stats?.certificate_courses}
+            />
+          </div>
+
+          {/* Tabs */}
+          <Tabs defaultValue="career">
+            <TabsList>
+              <TabsTrigger value="career">Career</TabsTrigger>
+              <TabsTrigger value="certificate">Certificate</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="career">
+              <CourseTable
+                courses={careerCourses}
+                onEdit={openEditModal}
+                onDelete={deleteCourse}
+                isAdmin={isAdmin}
+              />
+            </TabsContent>
+
+            <TabsContent value="certificate">
+              <CourseTable
+                courses={certificateCourses}
+                onEdit={openEditModal}
+                onDelete={deleteCourse}
+                isAdmin={isAdmin}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Courses" value={stats?.total_courses} />
-        <StatCard title="Career Courses" value={stats?.career_courses} />
-        <StatCard
-          title="Certificate Courses"
-          value={stats?.certificate_courses}
-        />
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="career">
-        <TabsList>
-          <TabsTrigger value="career">Career</TabsTrigger>
-          <TabsTrigger value="certificate">Certificate</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="career">
-          <CourseTable
-            courses={careerCourses}
-            onEdit={openEditModal}
-            onDelete={deleteCourse}
-          />
-        </TabsContent>
-
-        <TabsContent value="certificate">
-          <CourseTable
-            courses={certificateCourses}
-            onEdit={openEditModal}
-            onDelete={deleteCourse}
-          />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
 
-/* ---------------- COMPONENTS ---------------- */
+export default CoursesPage;
 
-const StatCard = ({ title, value }: { title: string; value?: number }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value ?? "-"}</div>
-    </CardContent>
-  </Card>
-);
+/* ---------------- HELPERS ---------------- */
+
+function StatCard({ title, value }: { title: string; value?: number }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-4xl font-bold">{value ?? 0}</div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const CourseTable = ({
   courses,
   onEdit,
   onDelete,
+  isAdmin,
 }: {
   courses: Course[];
   onEdit: (c: Course) => void;
   onDelete: (id: number) => void;
+  isAdmin: boolean;
 }) => (
   <div className="border rounded-lg overflow-y-auto max-h-[500px]">
     <Table>
@@ -342,6 +354,7 @@ const CourseTable = ({
           <TableHead>Course</TableHead>
           <TableHead>Duration</TableHead>
           <TableHead>Eligibility</TableHead>
+          <TableHead>Fees</TableHead>
           <TableHead>MOU</TableHead>
           {isAdmin && <TableHead>Actions</TableHead>}
         </TableRow>
@@ -350,7 +363,7 @@ const CourseTable = ({
         {courses.length === 0 ? (
           <TableRow>
             <TableCell
-              colSpan={5}
+              colSpan={6}
               className="text-center text-muted-foreground"
             >
               No courses found
@@ -362,7 +375,7 @@ const CourseTable = ({
               <TableCell>
                 <div className="font-medium">{c.course_name}</div>
                 <div className="text-xs text-muted-foreground">
-                  {c.course_code}
+                  Code: {c.course_code}
                 </div>
               </TableCell>
               <TableCell>
@@ -370,10 +383,15 @@ const CourseTable = ({
                 {c.duration}
               </TableCell>
               <TableCell>{c.eligibility}</TableCell>
+              <TableCell className="text-xs">
+                ₹{c.fee}
+                <br />
+                Royalty: ₹{ROYALTY * c.fee}
+                <br />
+                GST: ₹{GST * ROYALTY * c.fee}
+              </TableCell>
               <TableCell>
-                <Badge variant={c.mou_required ? "default" : "secondary"}>
-                  {c.mou_required ? "Required" : "No"}
-                </Badge>
+                <Badge>{c.mou_required ? "Required" : "No"}</Badge>
               </TableCell>
               {isAdmin && (
                 <TableCell>
@@ -404,5 +422,3 @@ const CourseTable = ({
     </Table>
   </div>
 );
-
-export default CoursesPage;

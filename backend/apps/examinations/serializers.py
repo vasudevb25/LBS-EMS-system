@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Examination, Course, Centre
 
+
 class ExaminationSerializer(serializers.ModelSerializer):
     course_name = serializers.CharField(write_only=True)
     centre_name = serializers.CharField(write_only=True)
@@ -10,20 +11,24 @@ class ExaminationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Examination
         fields = "__all__"
+
     def create(self, validated_data):
-        # Extract names
         course_name = validated_data.pop("course_name")
         centre_name = validated_data.pop("centre_name")
 
-        # Lookup actual objects
-        course = Course.objects.get(course_name=course_name)
-        centre = Centre.objects.get(centre_name=centre_name)
+        try:
+            course = Course.objects.get(course_name=course_name)
+        except Course.DoesNotExist:
+            raise serializers.ValidationError({"course_name": "Invalid course name"})
 
-        # Assign IDs
+        try:
+            centre = Centre.objects.get(centre_name=centre_name)
+        except Centre.DoesNotExist:
+            raise serializers.ValidationError({"centre_name": "Invalid centre name"})
+
         validated_data["course"] = course
         validated_data["centre"] = centre
 
-        # Create exam
         return Examination.objects.create(**validated_data)
 
 

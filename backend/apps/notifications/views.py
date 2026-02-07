@@ -1,16 +1,17 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 
 from .models import Notification
 from .serializers import NotificationSerializer
+from .permissions import IsSuperUserOnly
 from management.models import Centre
 
 
 class NotificationCreateView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsSuperUserOnly]
 
     def post(self, request):
         recipient = request.data.get("recipient")
@@ -29,9 +30,12 @@ class NotificationCreateView(APIView):
                 recipient="all_centres",
                 subject=subject,
                 message=message,
-                sent_by=request.user,
+                sent_by=request.user.id
             )
-            return Response({"status": "Sent to all centres"}, status=201)
+            return Response(
+                {"status": "Sent to all centres"},
+                status=status.HTTP_201_CREATED,
+            )
 
         if recipient == "centre_specific":
             try:
@@ -47,11 +51,11 @@ class NotificationCreateView(APIView):
                 subject=subject,
                 message=message,
                 target_centre=centre,
-                sent_by=request.user,
+                sent_by=request.user.id
             )
             return Response(
                 {"status": f"Sent to {centre.centre_name}"},
-                status=201,
+                status=status.HTTP_201_CREATED,
             )
 
         return Response(
@@ -69,7 +73,8 @@ class NotificationListView(generics.ListAPIView):
 
         if centre_id:
             return Notification.objects.filter(
-                Q(recipient="all_centres") | Q(target_centre_id=centre_id)
+                Q(recipient="all_centres") |
+                Q(target_centre_id=centre_id)
             ).order_by("-sent_date")
 
         return Notification.objects.filter(
@@ -78,7 +83,7 @@ class NotificationListView(generics.ListAPIView):
 
 
 class NotificationDeleteAllView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsSuperUserOnly]
 
     def delete(self, request):
         count, _ = Notification.objects.all().delete()
