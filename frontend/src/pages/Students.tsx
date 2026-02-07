@@ -26,14 +26,8 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/menus";
 import { Search, MoreHorizontal, Edit, Trash, UserCheck } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../components/ui/overlays";
 import { apiFetch } from "../lib/api";
+import LoaderOverlay from "../components/ui/loadoverlay";
 
 /* ---------------- TYPES ---------------- */
 
@@ -85,9 +79,7 @@ const StudentTable = ({
           <TableHead>Centre</TableHead>
           <TableHead>Phone</TableHead>
           <TableHead>Registered</TableHead>
-          {isCentre && (
-            <TableHead className="w-[80px] text-center">Actions</TableHead>
-          )}
+          {isCentre && <TableHead className="text-center">Actions</TableHead>}
         </TableRow>
       </TableHeader>
 
@@ -112,7 +104,6 @@ const StudentTable = ({
                   ID: {s.temporary_student_id}
                 </div>
               </TableCell>
-
               <TableCell>{s.email || "—"}</TableCell>
               <TableCell>{s.course_name}</TableCell>
               <TableCell>{s.centre_name}</TableCell>
@@ -164,20 +155,18 @@ const StudentsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Student | null>(null);
-  const [formData, setFormData] = useState<any>({});
-
-  /* ---------------- FETCH ---------------- */
-
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
         const [s, c, co] = await Promise.all([
           apiFetch("/api/students/"),
           apiFetch("/api/centres/"),
           apiFetch("/api/courses/"),
         ]);
+
         setStudents(s);
         setCentres(c);
         setCourses(co);
@@ -191,11 +180,6 @@ const StudentsPage = () => {
     fetchData();
   }, []);
 
-  /* ---------------- UI ---------------- */
-
-  if (loading) return <div>Loading students...</div>;
-  if (error) return <div className="text-destructive">{error}</div>;
-
   const filtered = students.filter((s) =>
     `${s.first_name} ${s.last_name}`
       .toLowerCase()
@@ -203,45 +187,58 @@ const StudentsPage = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Student Directory</h1>
-          <p className="text-muted-foreground">Manage registered students</p>
-        </div>
+    <div className="relative">
+      {loading && <LoaderOverlay />}
 
-        {isCentre && (
-          <Button>
-            <UserCheck className="mr-2 h-4 w-4" />
-            Add Student
-          </Button>
+      <div className={loading ? "pointer-events-none blur-sm" : ""}>
+        {error && (
+          <div className="mb-4 text-destructive font-medium">{error}</div>
         )}
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Students</CardTitle>
-          <CardDescription>Across all centres and courses</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search students..."
-              className="pl-8"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Student Directory</h1>
+              <p className="text-muted-foreground">
+                Manage registered students
+              </p>
+            </div>
+
+            {isCentre && (
+              <Button>
+                <UserCheck className="mr-2 h-4 w-4" />
+                Add Student
+              </Button>
+            )}
           </div>
 
-          <StudentTable
-            students={filtered}
-            onEdit={setEditing}
-            onDelete={() => {}}
-            isCentre={isCentre}
-          />
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>All Students</CardTitle>
+              <CardDescription>Across all centres and courses</CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <div className="mb-4 relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search students..."
+                  className="pl-8"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <StudentTable
+                students={filtered}
+                onEdit={() => {}}
+                onDelete={() => {}}
+                isCentre={isCentre}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
