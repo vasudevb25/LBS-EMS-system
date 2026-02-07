@@ -280,11 +280,20 @@ const CoursesPage = () => {
 
           {/* Stats */}
           <div className="grid gap-4 md:grid-cols-3">
-            <StatCard title="Total Courses" value={stats?.total_courses} />
-            <StatCard title="Career Courses" value={stats?.career_courses} />
+            <StatCard
+              title="Total Courses"
+              value={stats?.total_courses}
+              textClass="text-primary"
+            />
+            <StatCard
+              title="Career Courses"
+              value={stats?.career_courses}
+              textClass="text-success"
+            />
             <StatCard
               title="Certificate Courses"
               value={stats?.certificate_courses}
+              textClass="text-warning"
             />
           </div>
 
@@ -323,14 +332,24 @@ export default CoursesPage;
 
 /* ---------------- HELPERS ---------------- */
 
-function StatCard({ title, value }: { title: string; value?: number }) {
+function StatCard({
+  title,
+  value,
+  textClass,
+}: {
+  title: string;
+  value?: number;
+  textClass?: string;
+}) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-4xl font-bold">{value ?? 0}</div>
+        <div className={"text-2xl font-bold " + (textClass ?? "")}>
+          {value ?? 0}
+        </div>
       </CardContent>
     </Card>
   );

@@ -2,8 +2,11 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { DashboardHeader } from "../../components/Dashboard/DashboardHeader";
+import useIdleLogout from "../../hooks/useIdleLogout";
 
 export function AppLayout() {
+  useIdleLogout();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">

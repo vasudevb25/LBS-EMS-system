@@ -273,8 +273,12 @@ const CentresPage = () => {
           </div>
 
           {/* ---------- STATS ---------- */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Centres" value={stats?.total_centres} />
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
+            <StatCard
+              title="Total Centres"
+              value={stats?.total_centres}
+              textClass="text-primary"
+            />
             <StatCard
               title="Active Centres"
               value={stats?.active_centres}
@@ -290,7 +294,11 @@ const CentresPage = () => {
               value={stats?.expired_centres}
               textClass="text-destructive"
             />
-            <StatCard title="Total Students" value={stats?.total_students} />
+            <StatCard
+              title="Total Students"
+              value={stats?.total_students}
+              textClass="text-default"
+            />
           </div>
 
           {/* ---------- TABLE ---------- */}

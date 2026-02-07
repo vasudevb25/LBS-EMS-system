@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 import styled from "styled-components";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/ui/use-toast";
@@ -13,6 +13,10 @@ const Login = () => {
   const { toast } = useToast();
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.clear();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +42,7 @@ const Login = () => {
         title: "Authentication successful",
         description: `Welcome back, ${data.username}`,
         variant: "success",
+        duration: 1000,
       });
 
       // ⏳ short pause → dashboard
