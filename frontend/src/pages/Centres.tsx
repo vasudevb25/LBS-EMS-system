@@ -273,11 +273,23 @@ const CentresPage = () => {
           </div>
 
           {/* ---------- STATS ---------- */}
-          <div className="grid gap-4 md:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Total Centres" value={stats?.total_centres} />
-            <StatCard title="Active Centres" value={stats?.active_centres} />
-            <StatCard title="Expiring Soon" value={stats?.expiring_soon} />
-            <StatCard title="Expired" value={stats?.expired_centres} />
+            <StatCard
+              title="Active Centres"
+              value={stats?.active_centres}
+              textClass="text-success"
+            />
+            <StatCard
+              title="Expiring Soon"
+              value={stats?.expiring_soon}
+              textClass="text-warning"
+            />
+            <StatCard
+              title="Expired"
+              value={stats?.expired_centres}
+              textClass="text-destructive"
+            />
             <StatCard title="Total Students" value={stats?.total_students} />
           </div>
 
@@ -358,14 +370,24 @@ const CentresPage = () => {
 export default CentresPage;
 
 /* ---------- SMALL HELPER ---------- */
-function StatCard({ title, value }: { title: string; value?: number }) {
+function StatCard({
+  title,
+  value,
+  textClass,
+}: {
+  title: string;
+  value?: number;
+  textClass?: string;
+}) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value ?? 0}</div>
+        <div className={"text-2xl font-bold " + (textClass ?? "")}>
+          {value ?? 0}
+        </div>
       </CardContent>
     </Card>
   );
