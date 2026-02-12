@@ -43,6 +43,11 @@ import {
   Clock,
   FileText,
   Eye,
+  BookText,
+  BookCheck,
+  Bookmark,
+  BookmarkCheck,
+  BookMarked,
 } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import LoaderOverlay from "../components/ui/loadoverlay";
@@ -292,21 +297,54 @@ const CoursesPage = () => {
 
           {/* Stats */}
           <div className="grid gap-4 md:grid-cols-3">
-            <StatCard
-              title="Total Courses"
-              value={stats?.total_courses}
-              textClass="text-primary"
-            />
-            <StatCard
-              title="Career Courses"
-              value={stats?.career_courses}
-              textClass="text-success"
-            />
-            <StatCard
-              title="Certificate Courses"
-              value={stats?.certificate_courses}
-              textClass="text-warning"
-            />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Courses
+                </CardTitle>
+                <BookText className="h-7 w-7 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  {stats?.total_courses ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Career & Certificate
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Career Courses
+                </CardTitle>
+                <BookCheck className="h-7 w-7 text-success" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">
+                  {stats?.career_courses ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Long-term programs
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Certificate Courses
+                </CardTitle>
+                <BookMarked className="h-7 w-7 text-warning" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-warning">
+                  {stats?.certificate_courses ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Short-term programs
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Tabs */}
@@ -433,29 +471,6 @@ const CoursesPage = () => {
 export default CoursesPage;
 
 /* ---------------- HELPERS ---------------- */
-
-function StatCard({
-  title,
-  value,
-  textClass,
-}: {
-  title: string;
-  value?: number;
-  textClass?: string;
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className={"text-2xl font-bold " + (textClass ?? "")}>
-          {value ?? 0}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 const CourseTable = ({
   courses,

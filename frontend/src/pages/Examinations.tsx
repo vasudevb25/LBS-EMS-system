@@ -40,6 +40,7 @@ import {
   Trash,
   Users,
   Eye,
+  BookOpenCheck,
 } from "lucide-react";
 import {
   Dialog,
@@ -387,8 +388,7 @@ const ExaminationsPage = () => {
               </Dialog>
             )}
           </div>
-
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -422,10 +422,10 @@ const ExaminationsPage = () => {
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Supplementary
                 </CardTitle>
-                <ClipboardCheck className="h-7 w-7 text-success" />
+                <ClipboardCheck className="h-7 w-7 text-warning" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-success">
+                <div className="text-2xl font-bold text-warning">
                   {stats?.total_supply ?? 0}
                 </div>
                 <p className="text-xs text-muted-foreground">exams</p>
@@ -436,17 +436,32 @@ const ExaminationsPage = () => {
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Available
                 </CardTitle>
-                <Award className="h-7 w-7 text-accent" />
+                <BookOpenCheck className="h-7 w-7 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-accent">
+                <div className="text-2xl font-bold text-primary">
                   {stats?.total_available ?? 0}
                 </div>
                 <p className="text-xs text-muted-foreground">exams</p>
               </CardContent>
             </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Cetificates
+                </CardTitle>
+                <Award className="h-7 w-7 text-accent" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-accent">
+                  {stats?.total_available ?? 0} //need to change
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Generated this month
+                </p>
+              </CardContent>
+            </Card>
           </div>
-
           {/* Table */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2"></CardHeader>
