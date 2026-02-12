@@ -38,6 +38,7 @@ import {
   Trash,
   MapPin,
   Calendar,
+  Eye,
 } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import LoaderOverlay from "../components/ui/loadoverlay";
@@ -78,6 +79,10 @@ const CentresPage = () => {
   const [editing, setEditing] = useState<Centre | null>(null);
   const [form, setForm] = useState<Partial<Centre>>({ is_active: true });
 
+  /* NEW VIEW STATES */
+  const [viewOpen, setViewOpen] = useState(false);
+  const [viewingCentre, setViewingCentre] = useState<Centre | null>(null);
+
   /* ---------- FETCH ---------- */
   const fetchData = async () => {
     try {
@@ -116,6 +121,11 @@ const CentresPage = () => {
     setEditing(c);
     setForm(c);
     setModalOpen(true);
+  };
+
+  const onView = (c: Centre) => {
+    setViewingCentre(c);
+    setViewOpen(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,7 +191,7 @@ const CentresPage = () => {
         )}
 
         <div className="space-y-6">
-          {/* ---------- HEADER ---------- */}
+          {/* HEADER */}
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Centre Management</h1>
 
@@ -272,7 +282,7 @@ const CentresPage = () => {
             )}
           </div>
 
-          {/* ---------- STATS ---------- */}
+          {/* STATS */}
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
             <StatCard
               title="Total Centres"
@@ -301,11 +311,9 @@ const CentresPage = () => {
             />
           </div>
 
-          {/* ---------- TABLE ---------- */}
+          {/* TABLE */}
           <Card>
-            <CardHeader>
-              <CardTitle>Centre Directory</CardTitle>
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-2"></CardHeader>
             <CardContent>
               <Input
                 placeholder="Search centres..."
@@ -323,6 +331,7 @@ const CentresPage = () => {
                     {isAdmin && <TableHead>Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
                   {filtered.map((c) => {
                     const status = getValidityStatus(c.validity_end_date);
@@ -346,7 +355,11 @@ const CentresPage = () => {
                                   <MoreHorizontal />
                                 </Button>
                               </DropdownMenuTrigger>
+
                               <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => onView(c)}>
+                                  <Eye className="mr-2 h-4 w-4" /> View
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => openEditModal(c)}
                                 >
@@ -371,6 +384,64 @@ const CentresPage = () => {
           </Card>
         </div>
       </div>
+
+      {/* ---------- VIEW DIALOG ---------- */}
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent>
+          {viewingCentre && (
+            <div className="space-y-6 text-base">
+              <div className="border-b pb-4">
+                <h2 className="text-3xl font-bold">
+                  {viewingCentre.centre_name}
+                </h2>
+                <p className="text-muted-foreground text-lg">
+                  Code: {viewingCentre.centre_code}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
+                <div>
+                  <p className="font-semibold text-muted-foreground">
+                    Location
+                  </p>
+                  <p className="text-xl">{viewingCentre.location}</p>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-muted-foreground">
+                    District
+                  </p>
+                  <p className="text-xl">{viewingCentre.district}</p>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-muted-foreground">
+                    Validity
+                  </p>
+                  <p className="text-xl">
+                    {viewingCentre.validity_start_date} →{" "}
+                    {viewingCentre.validity_end_date}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-muted-foreground">Email</p>
+                  <p className="text-xl">{viewingCentre.email || "N/A"}</p>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-muted-foreground">Status</p>
+                  <Badge
+                    variant={viewingCentre.is_active ? "default" : "secondary"}
+                  >
+                    {viewingCentre.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
