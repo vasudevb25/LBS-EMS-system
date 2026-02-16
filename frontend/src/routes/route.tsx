@@ -15,6 +15,9 @@ import NotificationsPageAdmin from "../pages/Notifications_admin";
 import NotificationsPageCentre from "../pages/Notifications_centre";
 import ReportsPage from "../pages/Reports";
 import Index from "../pages/Index";
+import StudentProfile from "../pages/StudentProfile";
+import CentreProfile from "../pages/CentreProfile";
+import { IndianRupee } from "lucide-react";
 
 /* ---------- AUTH GUARD ---------- */
 const PrivateRoute = ({
@@ -56,19 +59,17 @@ export const routes: RouteObject[] = [
     children: [
       { path: "dashboard", element: <Index /> },
 
-      // Shared READ pages
       { path: "centres", element: <CentresPage /> },
       { path: "courses", element: <CoursesPage /> },
       { path: "students", element: <StudentsPage /> },
       { path: "examinations", element: <ExaminationsPage /> },
+      { path: "students/:id", element: <StudentProfile /> },
 
-      // Notifications (decided at render time)
       {
         path: "notifications",
         element: <NotificationsRouter />,
       },
 
-      // Admin-only
       {
         path: "reports",
         element: <PrivateRoute adminOnly element={<ReportsPage />} />,
