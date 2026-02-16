@@ -6,6 +6,7 @@ class Centre(models.Model):
     centre_name = models.CharField(max_length=255)
     location = models.CharField(max_length=255, null=True, blank=True)
     district = models.CharField(max_length=100, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
     validity_start_date = models.DateField()
     validity_end_date = models.DateField()
     is_active = models.BooleanField(default=True)

@@ -3,13 +3,21 @@ const API_URL = import.meta.env.VITE_API_URL;
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const access = localStorage.getItem("access");
 
+  const isFormData = options.body instanceof FormData;
+
+  const headers: HeadersInit = {
+    ...(access ? { Authorization: `Bearer ${access}` } : {}),
+    ...(options.headers || {}),
+  };
+
+  // Only set JSON header if NOT sending FormData
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(access ? { Authorization: `Bearer ${access}` } : {}),
-      ...(options.headers || {}),
-    },
+    headers,
   });
 
   // 🚨 Auto-logout ONLY for protected endpoints
@@ -23,10 +31,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error("Unauthorized");
   }
 
-  // Normal error handling (including login failures)
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error || "Invalid credentials");
+    throw new Error(err?.detail || err?.error || "Request failed");
   }
 
   return res.json();

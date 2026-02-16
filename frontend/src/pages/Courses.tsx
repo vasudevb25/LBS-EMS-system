@@ -42,6 +42,12 @@ import {
   Trash,
   Clock,
   FileText,
+  Eye,
+  BookText,
+  BookCheck,
+  Bookmark,
+  BookmarkCheck,
+  BookMarked,
 } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import LoaderOverlay from "../components/ui/loadoverlay";
@@ -82,8 +88,11 @@ const CoursesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [search, setSearch] = useState("");
+
   const [open, setOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
 
   const [formData, setFormData] = useState({
     course_code: "",
@@ -94,6 +103,14 @@ const CoursesPage = () => {
     fee: 0,
     mou_required: false,
   });
+
+  /* ---------- FILTER ---------- */
+  const filtered = courses.filter(
+    (c) =>
+      c.course_name.toLowerCase().includes(search.toLowerCase()) ||
+      c.stream.toLowerCase().includes(search.toLowerCase()) ||
+      c.course_code.toLowerCase().includes(search.toLowerCase()),
+  );
 
   /* ---------------- FETCH ---------------- */
 
@@ -280,12 +297,54 @@ const CoursesPage = () => {
 
           {/* Stats */}
           <div className="grid gap-4 md:grid-cols-3">
-            <StatCard title="Total Courses" value={stats?.total_courses} />
-            <StatCard title="Career Courses" value={stats?.career_courses} />
-            <StatCard
-              title="Certificate Courses"
-              value={stats?.certificate_courses}
-            />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Courses
+                </CardTitle>
+                <BookText className="h-7 w-7 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  {stats?.total_courses ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Career & Certificate
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Career Courses
+                </CardTitle>
+                <BookCheck className="h-7 w-7 text-success" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">
+                  {stats?.career_courses ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Long-term programs
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Certificate Courses
+                </CardTitle>
+                <BookMarked className="h-7 w-7 text-warning" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-warning">
+                  {stats?.certificate_courses ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Short-term programs
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Tabs */}
@@ -300,6 +359,7 @@ const CoursesPage = () => {
                 courses={careerCourses}
                 onEdit={openEditModal}
                 onDelete={deleteCourse}
+                onView={setViewingCourse}
                 isAdmin={isAdmin}
               />
             </TabsContent>
@@ -309,12 +369,101 @@ const CoursesPage = () => {
                 courses={certificateCourses}
                 onEdit={openEditModal}
                 onDelete={deleteCourse}
+                onView={setViewingCourse}
                 isAdmin={isAdmin}
               />
             </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {/* VIEW DIALOG */}
+      <Dialog
+        open={!!viewingCourse}
+        onOpenChange={() => setViewingCourse(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Course Details</DialogTitle>
+          </DialogHeader>
+
+          {viewingCourse && (
+            <div className="space-y-6 text-base">
+              {/* Header Section */}
+              <div className="border-b pb-4">
+                <h2 className="text-3xl font-bold">
+                  {viewingCourse.course_name}
+                </h2>
+                <p className="text-muted-foreground text-lg">
+                  Code: {viewingCourse.course_code}
+                </p>
+              </div>
+
+              {/* Info Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg">
+                <div className="space-y-2">
+                  <p className="font-semibold text-muted-foreground">Stream</p>
+                  <p className="text-xl">{viewingCourse.stream}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-semibold text-muted-foreground">
+                    Duration
+                  </p>
+                  <p className="text-xl">{viewingCourse.duration}</p>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <p className="font-semibold text-muted-foreground">
+                    Eligibility
+                  </p>
+                  <p className="text-lg leading-relaxed">
+                    {viewingCourse.eligibility}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-semibold text-muted-foreground">Fee</p>
+                  <p className="text-2xl font-bold text-primary">
+                    ₹ {viewingCourse.fee}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-semibold text-muted-foreground">
+                    MOU Requirement
+                  </p>
+                  <Badge
+                    variant={
+                      viewingCourse.mou_required ? "default" : "secondary"
+                    }
+                    className="text-base px-4 py-1"
+                  >
+                    {viewingCourse.mou_required ? "Required" : "Not Required"}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Financial Breakdown */}
+              <div className="border-t pt-4">
+                <h3 className="text-xl font-semibold mb-3">
+                  Financial Breakdown
+                </h3>
+                <div className="space-y-2 text-lg">
+                  <p>Royalty (25%): ₹ {viewingCourse.fee * 0.25}</p>
+                  <p>
+                    GST (18% of Royalty): ₹ {viewingCourse.fee * 0.25 * 0.18}
+                  </p>
+                  <p className="font-bold text-primary">
+                    Registration Total: ₹{" "}
+                    {viewingCourse.fee * 0.25 + viewingCourse.fee * 0.25 * 0.18}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -323,102 +472,126 @@ export default CoursesPage;
 
 /* ---------------- HELPERS ---------------- */
 
-function StatCard({ title, value }: { title: string; value?: number }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-4xl font-bold">{value ?? 0}</div>
-      </CardContent>
-    </Card>
-  );
-}
-
 const CourseTable = ({
   courses,
   onEdit,
   onDelete,
+  onView,
   isAdmin,
 }: {
   courses: Course[];
   onEdit: (c: Course) => void;
   onDelete: (id: number) => void;
+  onView: (c: Course) => void;
   isAdmin: boolean;
-}) => (
-  <div className="border rounded-lg overflow-y-auto max-h-[500px]">
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Course</TableHead>
-          <TableHead>Duration</TableHead>
-          <TableHead>Eligibility</TableHead>
-          <TableHead>Fees</TableHead>
-          <TableHead>MOU</TableHead>
-          {isAdmin && <TableHead>Actions</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {courses.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={6}
-              className="text-center text-muted-foreground"
-            >
-              No courses found
-            </TableCell>
-          </TableRow>
-        ) : (
-          courses.map((c) => (
-            <TableRow key={c.course_id}>
-              <TableCell>
-                <div className="font-medium">{c.course_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  Code: {c.course_code}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Clock className="inline h-3 w-3 mr-1" />
-                {c.duration}
-              </TableCell>
-              <TableCell>{c.eligibility}</TableCell>
-              <TableCell className="text-xs">
-                ₹{c.fee}
-                <br />
-                Royalty: ₹{ROYALTY * c.fee}
-                <br />
-                GST: ₹{GST * ROYALTY * c.fee}
-              </TableCell>
-              <TableCell>
-                <Badge>{c.mou_required ? "Required" : "No"}</Badge>
-              </TableCell>
-              {isAdmin && (
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => onEdit(c)}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => onDelete(c.course_id)}
-                      >
-                        <Trash className="mr-2 h-4 w-4" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+}) => {
+  const [search, setSearch] = useState("");
+
+  const filteredCourses = courses.filter(
+    (c) =>
+      c.course_name.toLowerCase().includes(search.toLowerCase()) ||
+      c.stream.toLowerCase().includes(search.toLowerCase()) ||
+      c.course_code.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <div className="border rounded-lg overflow-y-auto max-h-[500px]">
+      <Card>
+        <CardHeader />
+        <CardContent>
+          <Input
+            placeholder="Search courses..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mb-4"
+          />
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Course</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Eligibility</TableHead>
+                <TableHead>Fees</TableHead>
+                <TableHead>MOU</TableHead>
+                {isAdmin && <TableHead>Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {filteredCourses.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={isAdmin ? 6 : 5}
+                    className="text-center text-muted-foreground"
+                  >
+                    No courses found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredCourses.map((c) => (
+                  <TableRow key={c.course_id}>
+                    <TableCell>
+                      <div className="font-medium">{c.course_name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Code: {c.course_code}
+                      </div>
+                    </TableCell>
+
+                    <TableCell>
+                      <Clock className="inline h-3 w-3 mr-1" />
+                      {c.duration}
+                    </TableCell>
+
+                    <TableCell>{c.eligibility}</TableCell>
+
+                    <TableCell className="text-xs">
+                      ₹{c.fee}
+                      <br />
+                      Royalty: ₹{(c.fee * ROYALTY).toFixed(2)}
+                      <br />
+                      GST: ₹{(c.fee * ROYALTY * GST).toFixed(2)}
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge>{c.mou_required ? "Required" : "No"}</Badge>
+                    </TableCell>
+
+                    {isAdmin && (
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal />
+                            </Button>
+                          </DropdownMenuTrigger>
+
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => onView(c)}>
+                              <Eye className="mr-2 h-4 w-4" /> View
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => onEdit(c)}>
+                              <Edit className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => onDelete(c.course_id)}
+                            >
+                              <Trash className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
               )}
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
-  </div>
-);
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

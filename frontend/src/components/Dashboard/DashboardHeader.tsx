@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Search, User, Menu } from "lucide-react";
 import { Button } from "../../components/ui/buttons";
 import { Input } from "../../components/ui/inputs";
 import { ThemeToggle } from "../../components/ThemeToggle";
@@ -20,7 +20,11 @@ interface UserState {
   isAdmin: boolean;
 }
 
-export function DashboardHeader() {
+export function DashboardHeader({
+  toggleSidebar,
+}: {
+  toggleSidebar: () => void;
+}) {
   const navigate = useNavigate();
   const [user, setUser] = useState<UserState | null>(null);
 
@@ -50,13 +54,31 @@ export function DashboardHeader() {
 
   return (
     <header className="border-b bg-card/50 backdrop-blur px-4 py-2 flex items-center justify-between">
-      {/* Left */}
-      <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search…" className="w-64" />
+      {/* Left Section */}
+      <div className="flex items-center gap-4">
+        {/* Sidebar Toggle */}
+        <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+          <Menu className="h-5 w-5" />
+        </Button>
+
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <img
+            src="/image.png"
+            alt="EMS Logo"
+            className="h-8 w-8 object-contain"
+          />
+          <span className="font-semibold text-lg">EMS</span>
+        </div>
+
+        {/* Search */}
+        <div className="hidden md:flex items-center gap-2 ml-4">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search…" className="w-64" />
+        </div>
       </div>
 
-      {/* Right */}
+      {/* Right Section */}
       <div className="flex items-center gap-2">
         <ThemeToggle />
 
@@ -73,9 +95,7 @@ export function DashboardHeader() {
 
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{user.username}</DropdownMenuLabel>
-
             <DropdownMenuSeparator />
-
             <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

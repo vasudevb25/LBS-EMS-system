@@ -15,20 +15,30 @@ import {
   BookOpen,
 } from "lucide-react";
 import { apiFetch } from "../lib/api";
+import LoaderOverlay from "../components/ui/loadoverlay";
+import CentreDashboard from "./CentreProfile";
 
 const Index = () => {
+  const isAdmin = localStorage.getItem("is_admin") === "true";
+
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalCentres: 0,
     totalCourses: 0,
     totalExams: 0,
   });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isAdmin) return; // Centre dashboard handles its own loading
+
     const fetchStats = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
         const [students, centres, courses, exams] = await Promise.all([
           apiFetch("/api/students/"),
           apiFetch("/api/centres/"),
@@ -37,13 +47,12 @@ const Index = () => {
         ]);
 
         setStats({
-          totalStudents: Array.isArray(students) ? students.length : 0,
-          totalCentres: Array.isArray(centres) ? centres.length : 0,
-          totalCourses: Array.isArray(courses) ? courses.length : 0,
-          totalExams: Array.isArray(exams) ? exams.length : 0,
+          totalStudents: students?.length || 0,
+          totalCentres: centres?.length || 0,
+          totalCourses: courses?.length || 0,
+          totalExams: exams?.length || 0,
         });
       } catch (err: any) {
-        console.error("Dashboard stats error:", err);
         setError(err.message || "Failed to load dashboard data");
       } finally {
         setLoading(false);
@@ -51,95 +60,106 @@ const Index = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [isAdmin]);
+
+  // If centre → render centre dashboard directly
+  if (!isAdmin) {
+    return <CentreDashboard />;
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to LBS Education Management System. Monitor and manage your
-          educational operations.
-        </p>
-      </div>
+    <div className="relative">
+      {loading && <LoaderOverlay />}
 
-      {/* Stats Grid */}
-      {loading ? (
-        <div>Loading stats...</div>
-      ) : error ? (
-        <div className="text-red-500">Error: {error}</div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatsCard
-            title="Total Students"
-            value={stats.totalStudents.toLocaleString()}
-            description="Across all centres"
-            icon={Users}
-          />
-          <StatsCard
-            title="Total Centres"
-            value={stats.totalCentres.toLocaleString()}
-            description="Currently operational"
-            icon={Building2}
-          />
-          <StatsCard
-            title="Courses Offered"
-            value={stats.totalCourses.toLocaleString()}
-            description="Career & Certificate"
-            icon={GraduationCap}
-          />
-          <StatsCard
-            title="Total Examinations"
-            value={stats.totalExams.toLocaleString()}
-            description="Scheduled exams"
-            icon={UserCheck}
-          />
-        </div>
-      )}
+      <div className={loading ? "pointer-events-none blur-sm" : ""}>
+        {error && (
+          <div className="mb-4 text-destructive font-medium">
+            Error: {error}
+          </div>
+        )}
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <ModuleCard
-              title="Centre Management"
-              description=""
-              icon={Building2}
-              features={[]}
-              gradient="bg-gradient-primary"
-              link="/app/centres"
-            />
-            <ModuleCard
-              title="Course Management"
-              description=""
-              icon={BookOpen}
-              features={[]}
-              gradient="bg-gradient-accent"
-              link="/app/courses"
-            />
-            <ModuleCard
-              title="Student Registration"
-              description=""
+        <div className="space-y-6">
+          {/* Welcome */}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Admin Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Monitor and manage the entire education system.
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatsCard
+              title="Total Students"
+              value={stats.totalStudents.toLocaleString()}
+              description="Across all centres"
               icon={Users}
-              features={[]}
-              gradient="bg-gradient-secondary"
-              link="/app/students"
             />
-            <ModuleCard
-              title="Examination System"
-              description=""
-              icon={ClipboardCheck}
-              features={[]}
-              gradient="bg-gradient-primary"
-              link="/app/examinations"
+            <StatsCard
+              title="Total Centres"
+              value={stats.totalCentres.toLocaleString()}
+              description="Currently operational"
+              icon={Building2}
+            />
+            <StatsCard
+              title="Courses Offered"
+              value={stats.totalCourses.toLocaleString()}
+              description="Career & Certificate"
+              icon={GraduationCap}
+            />
+            <StatsCard
+              title="Total Examinations"
+              value={stats.totalExams.toLocaleString()}
+              description="Scheduled exams"
+              icon={UserCheck}
             />
           </div>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <RecentActivity />
+          {/* Modules + Activity */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <ModuleCard
+                  title="Centre Management"
+                  icon={Building2}
+                  features={[]}
+                  gradient="bg-gradient-primary"
+                  link="/app/centres"
+                  description={""}
+                />
+                <ModuleCard
+                  title="Course Management"
+                  icon={BookOpen}
+                  features={[]}
+                  gradient="bg-gradient-accent"
+                  link="/app/courses"
+                  description={""}
+                />
+                <ModuleCard
+                  title="Student Registration"
+                  icon={Users}
+                  features={[]}
+                  gradient="bg-gradient-secondary"
+                  link="/app/students"
+                  description={""}
+                />
+                <ModuleCard
+                  title="Examination System"
+                  icon={ClipboardCheck}
+                  features={[]}
+                  gradient="bg-gradient-primary"
+                  link="/app/examinations"
+                  description={""}
+                />
+              </div>
+            </div>
+
+            <div>
+              <RecentActivity />
+            </div>
+          </div>
         </div>
       </div>
     </div>
