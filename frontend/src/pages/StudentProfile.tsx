@@ -72,6 +72,21 @@ const StudentProfile = () => {
         />
       </Section>
 
+      {/* Eligibility */}
+      <Section title="Eligibility Proof">
+        {student.eligibility_proof ? (
+          <a
+            href={student.eligibility_proof}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            View Eligibility Document
+          </a>
+        ) : (
+          <p>No eligibility proof uploaded</p>
+        )}
+      </Section>
       {/* Payment */}
       <Section title="Payment Proof">
         {student.payment_proof ? (
@@ -85,6 +100,21 @@ const StudentProfile = () => {
           </a>
         ) : (
           <p>No payment proof uploaded</p>
+        )}
+      </Section>
+      {/* Aadhar */}
+      <Section title="Aadhar Proof">
+        {student.aadhar_path ? (
+          <a
+            href={student.aadhar_path}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            View Aadhar Document
+          </a>
+        ) : (
+          <p>No Aadhar proof uploaded</p>
         )}
       </Section>
     </div>

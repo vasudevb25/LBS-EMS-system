@@ -70,21 +70,11 @@ export function DashboardHeader({
           />
           <span className="font-semibold text-lg">EMS</span>
         </div>
-
-        {/* Search */}
-        <div className="hidden md:flex items-center gap-2 ml-4">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search…" className="w-64" />
-        </div>
       </div>
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
         <ThemeToggle />
-
-        <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
-        </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

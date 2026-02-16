@@ -14,9 +14,11 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = "__all__"
+        read_only_fields = ["centre", "status"]
+
         extra_kwargs = {
-            "photo_path": {"required": False},
-            "payment_proof": {"required": False},
+            "photo_path": {"required": False, "allow_null": True},
+            "payment_proof": {"required": False, "allow_null": True},
             "email": {"required": False},
             "phone_number": {"required": False},
         }

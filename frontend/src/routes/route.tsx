@@ -58,8 +58,10 @@ export const routes: RouteObject[] = [
     element: <PrivateRoute element={<AppLayout />} />,
     children: [
       { path: "dashboard", element: <Index /> },
-
-      { path: "centres", element: <CentresPage /> },
+      {
+        path: "centres",
+        element: <PrivateRoute adminOnly element={<CentresPage />} />,
+      },
       { path: "courses", element: <CoursesPage /> },
       { path: "students", element: <StudentsPage /> },
       { path: "examinations", element: <ExaminationsPage /> },
