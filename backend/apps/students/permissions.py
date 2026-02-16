@@ -1,20 +1,22 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission
 
 
 class StudentPermission(BasePermission):
-    """
-    Admin (is_superuser):
-        - Read-only
-
-    Centre:
-        - Create / Update / Delete
-    """
 
     def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
+        return request.user and request.user.is_authenticated
 
-        if request.method in SAFE_METHODS:
+    def has_object_permission(self, request, view, obj):
+
+        # Admin full access
+        if request.user.is_superuser:
             return True
 
-        return not request.user.is_superuser
+        # Centre users
+        if hasattr(request.user, "centre") and request.user.centre:
+
+            # Only their own students
+            if obj.centre == request.user.centre:
+                return True
+
+        return False

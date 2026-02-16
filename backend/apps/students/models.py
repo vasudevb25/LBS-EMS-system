@@ -29,6 +29,8 @@ class Student(models.Model):
 
     photo_path = models.ImageField(upload_to="students/photos/", null=True, blank=True)
     payment_proof = models.FileField(upload_to="students/payments/", null=True, blank=True)
+    eligibility_proof = models.FileField(upload_to="students/eligibility/", null=True, blank=True)
+    aadhar_path = models.FileField(upload_to="students/aadhar/", null=True, blank=True)
 
 
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL,db_column='created_by', on_delete=models.SET_NULL, null=True, blank=True)
@@ -38,6 +40,18 @@ class Student(models.Model):
     # Foreign keys
     centre = models.ForeignKey(Centre, on_delete=models.PROTECT, related_name="students")
     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name="students")
+
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Approved", "Approved"),
+        ("Rejected", "Rejected"),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Pending"
+    )
 
     class Meta:
         db_table = "students"

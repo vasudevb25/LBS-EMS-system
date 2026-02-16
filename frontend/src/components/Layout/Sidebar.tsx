@@ -37,7 +37,10 @@ export function Sidebar() {
 
   const filteredNavigation = navigationAdmin.filter((item) => {
     // Reports = admin only
-    if (item.name === "Reports" && !isAdmin) {
+    if (
+      (item.name === "Reports" || item.name === "Centre Management") &&
+      !isAdmin
+    ) {
       return false;
     }
     return true;

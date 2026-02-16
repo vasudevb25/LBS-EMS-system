@@ -6,9 +6,9 @@ import { Button } from "../components/ui/buttons";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "../components/ui/layout";
 import { Input } from "../components/ui/inputs";
 import {
@@ -20,20 +20,21 @@ import {
   TableRow,
 } from "../components/ui/data";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "../components/ui/menus";
-import { Search, MoreHorizontal, Edit, Trash, UserCheck } from "lucide-react";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/overlays";
+import {
+  Search,
+  Check,
+  X,
+  AlertCircle,
+  Pencil,
+  Trash2,
+  Eye,
+} from "lucide-react";
 import { apiFetch } from "../lib/api";
 
 /* ---------------- TYPES ---------------- */
@@ -62,11 +63,7 @@ interface Student {
   course_name: string;
   centre_name: string;
   registration_date: string;
-}
-
-interface Centre {
-  centre_id: number;
-  centre_name: string;
+  status: "Pending" | "Approved" | "Rejected";
 }
 
 interface Course {
@@ -77,18 +74,16 @@ interface Course {
 /* ---------------- PAGE ---------------- */
 
 const StudentsPage = () => {
-  const isCentre = localStorage.getItem("is_admin") === "false";
+  const isAdmin = localStorage.getItem("is_admin") === "true";
+  const centreId = localStorage.getItem("centre_id");
 
   const [students, setStudents] = useState<Student[]>([]);
-  const [centres, setCentres] = useState<Centre[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Student | null>(null);
   const [viewing, setViewing] = useState<Student | null>(null);
+  const [editing, setEditing] = useState<Student | null>(null);
+  const [open, setOpen] = useState(false);
 
   const initialForm = {
     temporary_student_id: "",
@@ -113,6 +108,8 @@ const StudentsPage = () => {
     registration_date: "",
     photo_path: null as File | null,
     payment_proof: null as File | null,
+    aadhar: null as File | null,
+    eligibility_proof: null as File | null,
   };
 
   const [formData, setFormData] = useState(initialForm);
@@ -121,70 +118,81 @@ const StudentsPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [studentsData, centresData, coursesData] = await Promise.all([
-          apiFetch("/api/students/"),
-          apiFetch("/api/centres/"),
-          apiFetch("/api/courses/"),
-        ]);
+      const studentUrl = isAdmin
+        ? "/api/students/"
+        : `/api/students/?centre=${centreId}`;
 
-        setStudents(studentsData);
-        setCentres(centresData);
-        setCourses(coursesData);
-      } catch (err: any) {
-        setError(err.message || "Failed to load data");
-      } finally {
-        setLoading(false);
-      }
+      const [studentData, courseData] = await Promise.all([
+        apiFetch(studentUrl),
+        apiFetch("/api/courses/"),
+      ]);
+
+      setStudents(studentData);
+      setCourses(courseData);
+      setLoading(false);
     };
 
     fetchData();
-  }, []);
+  }, [isAdmin, centreId]);
 
-  /* ---------------- HANDLERS ---------------- */
+  /* ---------------- APPROVAL ---------------- */
+
+  const approveStudent = async (id: number) => {
+    await apiFetch(`/api/students/${id}/approve/`, { method: "POST" });
+
+    setStudents((prev) =>
+      prev.map((s) => (s.student_id === id ? { ...s, status: "Approved" } : s)),
+    );
+  };
+
+  const rejectStudent = async (id: number) => {
+    await apiFetch(`/api/students/${id}/reject/`, { method: "POST" });
+
+    setStudents((prev) =>
+      prev.map((s) => (s.student_id === id ? { ...s, status: "Rejected" } : s)),
+    );
+  };
+
+  /* ---------------- ADD / EDIT ---------------- */
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, files } = e.target as HTMLInputElement;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files && files.length > 0 ? files[0] : value,
-    }));
+    if (files && files.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files[0],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
-  const openEdit = (s: Student) => {
-    setEditing(s);
-
+  const openEdit = (student: Student) => {
+    setEditing(student);
     setFormData({
       ...initialForm,
-      temporary_student_id: s.temporary_student_id,
-      first_name: s.first_name,
-      middle_name: s.middle_name ?? "",
-      last_name: s.last_name,
-      date_of_birth: s.date_of_birth.split("T")[0],
-      gender: s.gender,
-      email: s.email ?? "",
-      phone_number: s.phone_number ?? "",
-      registration_date: s.registration_date.split("T")[0],
-      centre:
-        centres
-          .find((c) => c.centre_name === s.centre_name)
-          ?.centre_id?.toString() || "",
+      temporary_student_id: student.temporary_student_id,
+      first_name: student.first_name,
+      middle_name: student.middle_name ?? "",
+      last_name: student.last_name,
+      date_of_birth: student.date_of_birth.split("T")[0],
+      gender: student.gender,
+      email: student.email ?? "",
+      phone_number: student.phone_number ?? "",
+      registration_date: student.registration_date.split("T")[0],
+      centre: student.centre_name,
       course:
         courses
-          .find((c) => c.course_name === s.course_name)
+          .find((c) => c.course_name === student.course_name)
           ?.course_id?.toString() || "",
     });
-
     setOpen(true);
-  };
-
-  const handleDelete = async (s: Student) => {
-    if (!confirm("Delete this student?")) return;
-    await apiFetch(`/api/students/${s.student_id}/`, { method: "DELETE" });
-    setStudents((prev) => prev.filter((x) => x.student_id !== s.student_id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -197,6 +205,9 @@ const StudentsPage = () => {
         payload.append(key, value as any);
       }
     });
+
+    // Always reset status to Pending for centre edits
+    payload.set("status", "Pending");
 
     if (editing) {
       await apiFetch(`/api/students/${editing.student_id}/`, {
@@ -212,23 +223,23 @@ const StudentsPage = () => {
 
     setOpen(false);
     setEditing(null);
-    setFormData(initialForm);
     window.location.reload();
+  };
+
+  const deleteStudent = async (id: number) => {
+    await apiFetch(`/api/students/${id}/`, { method: "DELETE" });
+    setStudents((prev) => prev.filter((s) => s.student_id !== id));
   };
 
   /* ---------------- FILTER ---------------- */
 
-  const filtered = students.filter((s) => {
-    const q = search.toLowerCase();
-    return (
-      s.first_name.toLowerCase().includes(q) ||
-      s.last_name.toLowerCase().includes(q) ||
-      (s.phone_number ?? "").includes(q)
-    );
-  });
+  const filtered = students.filter((s) =>
+    `${s.first_name} ${s.last_name}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
 
-  if (loading) return <div>Loading students...</div>;
-  if (error) return <div className="text-destructive">{error}</div>;
+  if (loading) return <div>Loading...</div>;
 
   return (
     <>
@@ -236,238 +247,245 @@ const StudentsPage = () => {
         {/* HEADER */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Student Directory</h1>
-            <p className="text-muted-foreground">Manage registered students</p>
+            <h1 className="text-3xl font-bold">Students</h1>
+            <p className="text-muted-foreground">
+              {isAdmin
+                ? "Admin approval required"
+                : "Manage your centre students"}
+            </p>
           </div>
 
-          {isCentre && (
+          {!isAdmin && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <UserCheck className="mr-2 h-4 w-4" />
-                  Add Student
-                </Button>
+                <Button>Add Student</Button>
               </DialogTrigger>
-
-              <DialogContent className="max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
+              <DialogContent className="max-h-[90vh] overflow-hidden p-0">
+                <DialogHeader className="px-6 pt-6 pb-2 border-b">
                   <DialogTitle>
                     {editing ? "Edit Student" : "Add Student"}
                   </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* PERSONAL DETAILS */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">
-                      Personal Details
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        name="temporary_student_id"
-                        placeholder="Student ID"
-                        value={formData.temporary_student_id}
-                        onChange={handleChange}
-                        required
-                      />
+                <div className="overflow-y-auto max-h-[80vh] px-6 py-4">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* PERSONAL DETAILS */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">
+                        Personal Details
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          name="temporary_student_id"
+                          placeholder="Student ID"
+                          value={formData.temporary_student_id}
+                          onChange={handleChange}
+                          required
+                        />
+                        <Input
+                          name="first_name"
+                          placeholder="First Name"
+                          value={formData.first_name}
+                          onChange={handleChange}
+                          required
+                        />
+                        <Input
+                          name="middle_name"
+                          placeholder="Middle Name"
+                          value={formData.middle_name}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="last_name"
+                          placeholder="Last Name"
+                          value={formData.last_name}
+                          onChange={handleChange}
+                          required
+                        />
+                        <Input
+                          type="date"
+                          name="date_of_birth"
+                          value={formData.date_of_birth}
+                          onChange={handleChange}
+                          required
+                        />
 
-                      <Input
-                        name="first_name"
-                        placeholder="First Name"
-                        value={formData.first_name}
-                        onChange={handleChange}
-                        required
-                      />
+                        <select
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleChange}
+                          className="border rounded-md w-full p-2"
+                        >
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
 
+                    {/* CONTACT */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">
+                        Contact Details
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          name="email"
+                          placeholder="Email"
+                          value={formData.email}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="phone_number"
+                          placeholder="Phone"
+                          value={formData.phone_number}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="address"
+                          placeholder="Address"
+                          value={formData.address}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="city"
+                          placeholder="City"
+                          value={formData.city}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="state"
+                          placeholder="State"
+                          value={formData.state}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="pincode"
+                          placeholder="Pincode"
+                          value={formData.pincode}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="aadhar_number"
+                          placeholder="Aadhar Number"
+                          value={formData.aadhar_number}
+                          onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+
+                    {/* GUARDIAN */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">
+                        Guardian Details
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          name="guardian_name"
+                          placeholder="Guardian Name"
+                          value={formData.guardian_name}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="guardian_relation"
+                          placeholder="Relation"
+                          value={formData.guardian_relation}
+                          onChange={handleChange}
+                        />
+                        <Input
+                          name="guardian_phone_number"
+                          placeholder="Guardian Phone"
+                          value={formData.guardian_phone_number}
+                          onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+
+                    {/* EDUCATION */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">
+                        Educational Details
+                      </h3>
                       <Input
-                        name="middle_name"
-                        placeholder="Middle Name"
-                        value={formData.middle_name}
+                        name="educational_qualification"
+                        placeholder="Educational Qualification"
+                        value={formData.educational_qualification}
                         onChange={handleChange}
                       />
+                    </div>
 
-                      <Input
-                        name="last_name"
-                        placeholder="Last Name"
-                        value={formData.last_name}
-                        onChange={handleChange}
-                        required
-                      />
-
-                      <Input
-                        type="date"
-                        name="date_of_birth"
-                        value={formData.date_of_birth}
-                        onChange={handleChange}
-                        required
-                      />
-
+                    {/* COURSE */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">
+                        Course Allocation
+                      </h3>
                       <select
-                        name="gender"
-                        value={formData.gender}
+                        name="course"
+                        value={formData.course}
                         onChange={handleChange}
                         className="border rounded-md w-full p-2"
+                        required
                       >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
+                        <option value="">Select Course</option>
+                        {courses.map((c) => (
+                          <option key={c.course_id} value={c.course_id}>
+                            {c.course_name}
+                          </option>
+                        ))}
                       </select>
                     </div>
-                  </div>
 
-                  {/* CONTACT DETAILS */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">
-                      Contact Details
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        name="email"
-                        placeholder="Email"
-                        value={formData.email}
-                        onChange={handleChange}
-                      />
+                    {/* DOCUMENTS */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Documents</h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className="block">
+                          <span className="text-sm font-medium">Photo</span>
+                          <Input
+                            type="file"
+                            name="photo_path"
+                            onChange={handleChange}
+                          />
+                        </label>
 
-                      <Input
-                        name="phone_number"
-                        placeholder="Phone"
-                        value={formData.phone_number}
-                        onChange={handleChange}
-                      />
+                        <label className="block">
+                          <span className="text-sm font-medium">Aadhar</span>
+                          <Input
+                            type="file"
+                            name="aadhar_path"
+                            onChange={handleChange}
+                          />
+                        </label>
 
-                      <Input
-                        name="address"
-                        placeholder="Address"
-                        value={formData.address}
-                        onChange={handleChange}
-                      />
+                        <label className="block">
+                          <span className="text-sm font-medium">
+                            Eligibility Proof
+                          </span>
+                          <Input
+                            type="file"
+                            name="eligibility_proof"
+                            onChange={handleChange}
+                          />
+                        </label>
 
-                      <Input
-                        name="city"
-                        placeholder="City"
-                        value={formData.city}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="state"
-                        placeholder="State"
-                        value={formData.state}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="pincode"
-                        placeholder="Pincode"
-                        value={formData.pincode}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="aadhar_number"
-                        placeholder="Aadhar Number"
-                        value={formData.aadhar_number}
-                        onChange={handleChange}
-                      />
+                        <label className="block">
+                          <span className="text-sm font-medium">
+                            Payment Proof
+                          </span>
+                          <Input
+                            type="file"
+                            name="payment_proof"
+                            onChange={handleChange}
+                          />
+                        </label>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* GUARDIAN */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">
-                      Guardian Details
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        name="guardian_name"
-                        placeholder="Guardian Name"
-                        value={formData.guardian_name}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="guardian_relation"
-                        placeholder="Relation"
-                        value={formData.guardian_relation}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="guardian_phone_number"
-                        placeholder="Guardian Phone"
-                        value={formData.guardian_phone_number}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* EDUCATION */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">
-                      Educational Details
-                    </h3>
-                    <Input
-                      name="educational_qualification"
-                      placeholder="Educational Qualification"
-                      value={formData.educational_qualification}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  {/* COURSE + CENTRE */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <select
-                      name="centre"
-                      value={formData.centre}
-                      onChange={handleChange}
-                      className="border rounded-md w-full p-2"
-                      required
-                    >
-                      <option value="">Select Centre</option>
-                      {centres.map((c) => (
-                        <option key={c.centre_id} value={c.centre_id}>
-                          {c.centre_name}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      name="course"
-                      value={formData.course}
-                      onChange={handleChange}
-                      className="border rounded-md w-full p-2"
-                      required
-                    >
-                      <option value="">Select Course</option>
-                      {courses.map((c) => (
-                        <option key={c.course_id} value={c.course_id}>
-                          {c.course_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* DOCUMENTS */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Documents</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        type="file"
-                        name="photo_path"
-                        onChange={handleChange}
-                      />
-                      <Input
-                        type="file"
-                        name="payment_proof"
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  <Button type="submit" className="w-full">
-                    {editing ? "Update Student" : "Save Student"}
-                  </Button>
-                </form>
+                    <Button type="submit" className="w-full">
+                      {editing ? "Update Student" : "Save Student"}
+                    </Button>
+                  </form>
+                </div>
               </DialogContent>
             </Dialog>
           )}
@@ -476,87 +494,99 @@ const StudentsPage = () => {
         {/* TABLE */}
         <Card>
           <CardHeader>
-            <CardTitle>All Students</CardTitle>
-            <CardDescription>Across all centres and courses</CardDescription>
+            <CardTitle>Student List</CardTitle>
+            <CardDescription>Status-based approval system</CardDescription>
           </CardHeader>
 
           <CardContent>
             <div className="mb-4 relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search students..."
+                placeholder="Search..."
                 className="pl-8"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            <div className="max-h-[500px] overflow-y-auto border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Centre</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Registered</TableHead>
-                    {isCentre && <TableHead>Actions</TableHead>}
-                  </TableRow>
-                </TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Course</TableHead>
+                  {isAdmin && <TableHead>Centre</TableHead>}
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
 
-                <TableBody>
-                  {filtered.map((s) => (
-                    <TableRow key={s.student_id}>
-                      <TableCell>
-                        {s.first_name} {s.last_name}
-                      </TableCell>
-                      <TableCell>{s.email || "—"}</TableCell>
-                      <TableCell>{s.course_name}</TableCell>
-                      <TableCell>{s.centre_name}</TableCell>
-                      <TableCell>{s.phone_number || "—"}</TableCell>
-                      <TableCell>
-                        {new Date(s.registration_date).toLocaleDateString()}
-                      </TableCell>
+              <TableBody>
+                {filtered.map((s) => (
+                  <TableRow key={s.student_id}>
+                    <TableCell>
+                      {s.first_name} {s.last_name}
+                    </TableCell>
+                    <TableCell>{s.course_name}</TableCell>
+                    {isAdmin && <TableCell>{s.centre_name}</TableCell>}
 
-                      {isCentre && (
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal />
-                              </Button>
-                            </DropdownMenuTrigger>
-
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-                              <DropdownMenuItem onClick={() => setViewing(s)}>
-                                View
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem onClick={() => openEdit(s)}>
-                                Edit
-                              </DropdownMenuItem>
-
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => handleDelete(s)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                    <TableCell>
+                      {s.status === "Pending" && (
+                        <span className="flex items-center gap-1 text-yellow-600">
+                          <AlertCircle className="h-4 w-4" /> Pending
+                        </span>
                       )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                      {s.status === "Approved" && (
+                        <span className="text-green-600">Approved</span>
+                      )}
+                      {s.status === "Rejected" && (
+                        <span className="text-red-600">Rejected</span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="flex gap-3 items-center">
+                      {/* VIEW */}
+                      <Eye
+                        className="cursor-pointer text-blue-600"
+                        onClick={() => setViewing(s)}
+                      />
+
+                      {/* ADMIN APPROVAL */}
+                      {isAdmin && s.status === "Pending" && (
+                        <>
+                          <Check
+                            className="text-green-600 cursor-pointer"
+                            onClick={() => approveStudent(s.student_id)}
+                          />
+                          <X
+                            className="text-red-600 cursor-pointer"
+                            onClick={() => rejectStudent(s.student_id)}
+                          />
+                        </>
+                      )}
+
+                      {/* CENTRE EDIT/DELETE */}
+                      {!isAdmin && (
+                        <>
+                          <Pencil
+                            className="cursor-pointer text-indigo-600"
+                            onClick={() => openEdit(s)}
+                          />
+                          <Trash2
+                            className="cursor-pointer text-red-600"
+                            onClick={() => deleteStudent(s.student_id)}
+                          />
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
+
+      {/* VIEW MODAL */}
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -621,8 +651,6 @@ const StudentsPage = () => {
 };
 
 export default StudentsPage;
-
-/* ---------------- HELPER ---------------- */
 
 function Detail({ label, value }: { label: string; value?: string }) {
   return (
