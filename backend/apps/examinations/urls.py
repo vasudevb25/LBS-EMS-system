@@ -1,9 +1,11 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import ExaminationViewSet, ExamStatsAPIView
+from .views import ExamStudentRegViewSet, ExaminationViewSet, ExamStatsAPIView
 
 router = routers.DefaultRouter()
-router.register(r'examinations', ExaminationViewSet, basename='examinations')
+router.register("examinations", ExaminationViewSet, basename='examinations')
+router.register("exam-registrations", ExamStudentRegViewSet)
+
 
 
 urlpatterns = [

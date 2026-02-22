@@ -1,5 +1,7 @@
 from django.db import models
 from management.models import Course, Centre
+from students.models import Student
+
 
 
 class Examination(models.Model):
@@ -17,6 +19,7 @@ class Examination(models.Model):
     exam_end_time = models.TimeField()
     subject_code = models.CharField(max_length=50, null=True, blank=True)
     exam_type = models.CharField(max_length=50, choices=EXAM_TYPE_CHOICES)
+    exam_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_by = models.ForeignKey(Centre, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_examinations', db_column='created_by')
     created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
 
@@ -26,3 +29,14 @@ class Examination(models.Model):
     def __str__(self):
         return f"{self.exam_name} ({self.exam_date})"
 
+
+class ExamStudentReg(models.Model):
+    student = models.ForeignKey(Student,on_delete=models.CASCADE,related_name="exam_registrations")
+    exam = models.ForeignKey(Examination,on_delete=models.CASCADE,related_name="student_registrations")
+    date_of_course_registered = models.DateField()
+    photo = models.ImageField(upload_to="exam_registrations/photos/",null=True,blank=True)
+    exam_fee_receipt = models.FileField(upload_to="exam_registrations/receipts/",null=True,blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student} - {self.exam}"

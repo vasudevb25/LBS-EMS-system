@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Examination, Course, Centre
+from .models import ExamStudentReg, Examination, Course, Centre
 
 
 class ExaminationSerializer(serializers.ModelSerializer):
@@ -31,6 +31,19 @@ class ExaminationSerializer(serializers.ModelSerializer):
 
         return Examination.objects.create(**validated_data)
 
+
+class ExamStudentRegSerializer(serializers.ModelSerializer):
+    candidate_name = serializers.CharField(source="student.first_name", read_only=True)
+    centre_code = serializers.CharField(source="student.centre.centre_code", read_only=True)
+    course_code = serializers.CharField(source="student.course.course_code", read_only=True)
+    exam_centre = serializers.CharField(source="exam.exam_centre", read_only=True)
+    exam_fees = serializers.DecimalField(source="exam.fees", max_digits=10, decimal_places=2, read_only=True)
+    course_code = serializers.CharField(source="student.course.course_code", read_only=True)
+    exam_centre = serializers.CharField(source="exam.exam_centre", read_only=True)
+    exam_fees = serializers.DecimalField(source="exam.fees", max_digits=10, decimal_places=2, read_only=True)
+    class Meta:
+        model = ExamStudentReg
+        fields = "__all__"
 
 class ExamStatsSerializer(serializers.Serializer):
     scheduled_exams = serializers.IntegerField()

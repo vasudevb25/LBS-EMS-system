@@ -66,6 +66,7 @@ interface Exam {
   centre: number;
   course_name?: string;
   centre_name?: string;
+  exam_fee: number;
 }
 
 interface ExamStats {
@@ -117,6 +118,7 @@ const ExaminationsPage = () => {
     exam_end_time: "",
     course_name: "",
     centre_name: "",
+    exam_fee: 0,
   });
 
   /* ---------------- FETCH ---------------- */
@@ -204,6 +206,7 @@ const ExaminationsPage = () => {
         exam_end_time: "",
         course_name: "",
         centre_name: "",
+        exam_fee: 0,
       });
 
       await fetchAll();
@@ -476,9 +479,11 @@ const ExaminationsPage = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Exam</TableHead>
+
                     <TableHead>Schedule</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Centre</TableHead>
+                    <TableHead>Exam Fees</TableHead>
                     {isAdmin && <TableHead />}
                   </TableRow>
                 </TableHeader>
@@ -503,6 +508,10 @@ const ExaminationsPage = () => {
                       </TableCell>
 
                       <TableCell>{e.centre_name}</TableCell>
+
+                      <TableCell>
+                        {e.exam_fee ? e.exam_fee.toLocaleString() : "N/A"}
+                      </TableCell>
 
                       {isAdmin && (
                         <TableCell>
@@ -529,6 +538,7 @@ const ExaminationsPage = () => {
                                     exam_end_time: e.exam_end_time,
                                     course_name: e.course_name ?? "",
                                     centre_name: e.centre_name ?? "",
+                                    exam_fee: e.exam_fee ?? 0,
                                   });
                                   setOpen(true);
                                 }}

@@ -69,8 +69,23 @@ interface Student {
 interface Course {
   course_id: number;
   course_name: string;
+  fee: number;
 }
 
+interface Examination {
+  exam_id: number;
+  exam_name: string;
+  subject_code: string;
+  exam_type: "Regular" | "Supplementary";
+  exam_date: string;
+  exam_start_time: string;
+  exam_end_time: string;
+  course: number;
+  centre: number;
+  course_name?: string;
+  centre_name?: string;
+  exam_fee: string;
+}
 /* ---------------- PAGE ---------------- */
 
 const StudentsPage = () => {
@@ -84,6 +99,24 @@ const StudentsPage = () => {
   const [viewing, setViewing] = useState<Student | null>(null);
   const [editing, setEditing] = useState<Student | null>(null);
   const [open, setOpen] = useState(false);
+  const [examinations, setExaminations] = useState<Examination[]>([]);
+
+  const [examOpen, setExamOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(
+    null,
+  );
+  const [examViewOpen, setExamViewOpen] = useState(false);
+  const [studentExams, setStudentExams] = useState<any[]>([]);
+  const [examLoading, setExamLoading] = useState(false);
+
+  const [examForm, setExamForm] = useState({
+    exam: "",
+    date_of_course_registered: "",
+    photo: null as File | null,
+    exam_fee_receipt: null as File | null,
+  });
+
+  const [saveMode, setSaveMode] = useState<"close" | "stay">("close");
 
   const initialForm = {
     temporary_student_id: "",
@@ -122,13 +155,15 @@ const StudentsPage = () => {
         ? "/api/students/"
         : `/api/students/?centre=${centreId}`;
 
-      const [studentData, courseData] = await Promise.all([
+      const [studentData, courseData, examData] = await Promise.all([
         apiFetch(studentUrl),
         apiFetch("/api/courses/"),
+        apiFetch("/api/examinations/"),
       ]);
 
       setStudents(studentData);
       setCourses(courseData);
+      setExaminations(examData);
       setLoading(false);
     };
 
@@ -220,10 +255,13 @@ const StudentsPage = () => {
         body: payload,
       });
     }
-
-    setOpen(false);
-    setEditing(null);
-    window.location.reload();
+    if (saveMode === "close") {
+      setOpen(false);
+      setEditing(null);
+    } else {
+      // Stay on form, do NOT close
+      alert("Saved successfully");
+    }
   };
 
   const deleteStudent = async (id: number) => {
@@ -232,15 +270,32 @@ const StudentsPage = () => {
   };
 
   /* ---------------- FILTER ---------------- */
-
+  const selectedCourse = courses.find(
+    (c) => String(c.course_id) === String(formData.course),
+  );
   const filtered = students.filter((s) =>
     `${s.first_name} ${s.last_name}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
 
-  if (loading) return <div>Loading...</div>;
+  function registerForExam(student_id: number) {
+    setSelectedStudentId(student_id);
+    setExamOpen(true);
+  }
+  const viewExam = async (studentId: number) => {
+    setExamLoading(true);
+    setExamViewOpen(true);
 
+    const data = await apiFetch("/api/exam-registrations/");
+
+    const filtered = data.filter((reg: any) => reg.student === studentId);
+
+    setStudentExams(filtered);
+    setExamLoading(false);
+  };
+
+  if (loading) return <div>Loading...</div>;
   return (
     <>
       <div className="space-y-6">
@@ -415,10 +470,12 @@ const StudentsPage = () => {
                     </div>
 
                     {/* COURSE */}
+                    {/* COURSE */}
                     <div>
                       <h3 className="text-lg font-semibold mb-3">
                         Course Allocation
                       </h3>
+
                       <select
                         name="course"
                         value={formData.course}
@@ -433,6 +490,20 @@ const StudentsPage = () => {
                           </option>
                         ))}
                       </select>
+
+                      {selectedCourse && (
+                        <div className="mt-3 p-3 bg-gray-50 border rounded-md ">
+                          <p className="text-sm text-muted-foreground">
+                            Course Fees
+                          </p>
+                          <p className="text-lg font-semibold text-indigo-600">
+                            ₹{" "}
+                            {selectedCourse.fee
+                              ? selectedCourse.fee.toLocaleString()
+                              : "Not Available"}{" "}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* DOCUMENTS */}
@@ -481,9 +552,24 @@ const StudentsPage = () => {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full">
-                      {editing ? "Update Student" : "Save Student"}
-                    </Button>
+                    <div className="flex gap-4 pt-4">
+                      <Button
+                        type="submit"
+                        className="w-1/2"
+                        onClick={() => setSaveMode("close")}
+                      >
+                        {editing ? "Update & Close" : "Save & Close"}
+                      </Button>
+
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        className="w-1/2"
+                        onClick={() => setSaveMode("stay")}
+                      >
+                        {editing ? "Update & Continue" : "Save & Continue"}
+                      </Button>
+                    </div>
                   </form>
                 </div>
               </DialogContent>
@@ -517,6 +603,8 @@ const StudentsPage = () => {
                   {isAdmin && <TableHead>Centre</TableHead>}
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
+                  <TableHead>Register For EXAM</TableHead>
+                  <TableHead>View EXAM</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -565,7 +653,7 @@ const StudentsPage = () => {
                       )}
 
                       {/* CENTRE EDIT/DELETE */}
-                      {!isAdmin && (
+                      {!isAdmin && !(s.status === "Approved") && (
                         <>
                           <Pencil
                             className="cursor-pointer text-indigo-600"
@@ -578,6 +666,25 @@ const StudentsPage = () => {
                         </>
                       )}
                     </TableCell>
+
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => registerForExam(s.student_id)}
+                      >
+                        Apply for Exam
+                      </Button>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => viewExam(s.student_id)}
+                      >
+                        View Exam
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -587,6 +694,132 @@ const StudentsPage = () => {
       </div>
 
       {/* VIEW MODAL */}
+      <Dialog open={examOpen} onOpenChange={setExamOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Exam Registration</DialogTitle>
+          </DialogHeader>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+
+              const payload = new FormData();
+              payload.append("student", String(selectedStudentId));
+              payload.append("exam", examForm.exam);
+              payload.append(
+                "date_of_course_registered",
+                examForm.date_of_course_registered,
+              );
+
+              if (examForm.photo) payload.append("photo", examForm.photo);
+              if (examForm.exam_fee_receipt)
+                payload.append("exam_fee_receipt", examForm.exam_fee_receipt);
+
+              await apiFetch("/api/exam-registrations/", {
+                method: "POST",
+                body: payload,
+              });
+
+              setExamOpen(false);
+            }}
+            className="space-y-6"
+          >
+            {/* Section: Course Info */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">
+                Course Registration Date
+              </h3>
+              <Input
+                type="date"
+                required
+                className="w-full"
+                onChange={(e) =>
+                  setExamForm({
+                    ...examForm,
+                    date_of_course_registered: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* Section: Exam Selection */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Select Examination</h3>
+              <select
+                required
+                value={examForm.exam}
+                onChange={(e) =>
+                  setExamForm({
+                    ...examForm,
+                    exam: e.target.value,
+                  })
+                }
+                className="border rounded-md w-full p-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+              >
+                <option value="">Choose an exam</option>
+                {examinations.map((exam) => (
+                  <option key={exam.exam_id} value={exam.exam_id}>
+                    {exam.exam_name} | {exam.exam_date}
+                  </option>
+                ))}
+              </select>
+
+              {/* Optional exam preview */}
+              {examForm.exam && (
+                <div className="mt-3 p-3 bg-black-50  text-sm">
+                  {
+                    examinations.find(
+                      (e) => String(e.exam_id) === examForm.exam,
+                    )?.exam_type
+                  }{" "}
+                  Exam
+                </div>
+              )}
+            </div>
+
+            {/* Section: Documents */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Upload Documents</h3>
+
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Student Photo</label>
+                  <Input
+                    type="file"
+                    onChange={(e) =>
+                      setExamForm({
+                        ...examForm,
+                        photo: e.target.files?.[0] || null,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">
+                    Exam Fee Receipt
+                  </label>
+                  <Input
+                    type="file"
+                    onChange={(e) =>
+                      setExamForm({
+                        ...examForm,
+                        exam_fee_receipt: e.target.files?.[0] || null,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <Button type="submit" className="w-full text-base py-3">
+              Submit Exam Registration
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -644,6 +877,129 @@ const StudentsPage = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={examViewOpen} onOpenChange={setExamViewOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto p-0 rounded-2xl">
+          <div className="flex">
+            {/* LEFT SIDE – Student Info */}
+            {studentExams.length > 0 && (
+              <div className="w-1/3 border-r border-gray-800 p-6 flex flex-col items-center text-center space-y-4">
+                <img
+                  src={
+                    studentExams[0].photo
+                      ? new URL(studentExams[0].photo, API_URL).toString()
+                      : ""
+                  }
+                  alt="Student"
+                  className="h-28 w-28 rounded-full object-cover border border-700 shadow-md"
+                />
+
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    {studentExams[0].candidate_name}
+                  </h2>
+                  <p className="text-sm text-400">
+                    Course Code: {studentExams[0].course_code}
+                  </p>
+                  <p className="text-sm text-400">
+                    Centre Code: {studentExams[0].centre_code}
+                  </p>
+                </div>
+              </div>
+            )}
+            {/* RIGHT SIDE – Exam List */}
+            <div className="w-2/3 p-6 space-y-6">
+              <h2 className="text-2xl font-bold border-b border-gray-800 pb-4">
+                Exam Registrations
+              </h2>
+
+              {examLoading ? (
+                <div className="text-center py-10 text-400">
+                  Loading exams...
+                </div>
+              ) : studentExams.length === 0 ? (
+                <div className="text-center py-10 text-400">
+                  No exam registrations found.
+                </div>
+              ) : (
+                studentExams.map((reg) => {
+                  const examDetails = examinations.find(
+                    (e) => e.exam_id === reg.exam,
+                  );
+
+                  return (
+                    <div
+                      key={reg.id}
+                      className="border border-800 rounded-xl p-5 hover:bg-700 transition-all duration-200"
+                    >
+                      {/* Exam Header */}
+                      <div className="flex justify-between mb-3">
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {examDetails?.exam_name || "Exam"}
+                          </h3>
+                          <p className="text-sm text-400">
+                            {examDetails?.exam_type} •{" "}
+                            {examDetails?.subject_code}
+                          </p>
+                        </div>
+
+                        <div className="text-right text-sm text-400">
+                          <p>{examDetails?.exam_date}</p>
+                          <p>
+                            {examDetails?.exam_start_time} -{" "}
+                            {examDetails?.exam_end_time}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Info Grid */}
+                      <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                        <div>
+                          <p className="text-400">Exam Fee</p>
+                          <p className="font-medium">
+                            ₹ {examDetails?.exam_fee}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-400">Registered On</p>
+                          <p className="font-medium">
+                            {new Date(reg.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-400">Course Code</p>
+                          <p className="font-medium">{reg.course_code}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-400">Centre Code</p>
+                          <p className="font-medium">{reg.centre_code}</p>
+                        </div>
+                      </div>
+
+                      {/* Documents */}
+                      <div className="flex gap-6 pt-4 border-t border-800 text-sm">
+                        {reg.exam_fee_receipt && (
+                          <a
+                            href={reg.exam_fee_receipt}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-400 font-medium hover:underline"
+                          >
+                            View Receipt
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

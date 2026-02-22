@@ -25,11 +25,15 @@ class StudentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
+        base_queryset = Student.objects.select_related(
+            "centre", "course"
+        ).all().order_by("-created_at")
+
         if user.is_superuser:
-            return self.queryset
+            return base_queryset
 
         if hasattr(user, "centre") and user.centre:
-            return self.queryset.filter(centre=user.centre)
+            return base_queryset.filter(centre=user.centre)
 
         return Student.objects.none()
 

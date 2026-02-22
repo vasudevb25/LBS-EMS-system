@@ -2,10 +2,11 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
 
-from .models import Examination
-from .serializers import ExaminationSerializer
+from .models import ExamStudentReg, Examination
+from .serializers import ExamStudentRegSerializer, ExaminationSerializer
 from .permissions import ExaminationPermission
 
 
@@ -14,6 +15,13 @@ class ExaminationViewSet(viewsets.ModelViewSet):
     serializer_class = ExaminationSerializer
     permission_classes = [ExaminationPermission]
 
+
+
+class ExamStudentRegViewSet(viewsets.ModelViewSet):
+    queryset = ExamStudentReg.objects.select_related("student", "exam").all()
+    serializer_class = ExamStudentRegSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsAuthenticated]
 
 class ExamStatsAPIView(APIView):
     permission_classes = [IsAuthenticated]
