@@ -787,6 +787,7 @@ const StudentsPage = () => {
                   <label className="text-sm font-medium">Student Photo</label>
                   <Input
                     type="file"
+                    required
                     onChange={(e) =>
                       setExamForm({
                         ...examForm,
@@ -802,6 +803,7 @@ const StudentsPage = () => {
                   </label>
                   <Input
                     type="file"
+                    required
                     onChange={(e) =>
                       setExamForm({
                         ...examForm,
