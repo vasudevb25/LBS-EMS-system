@@ -41,6 +41,17 @@ class ExamStudentRegSerializer(serializers.ModelSerializer):
     course_code = serializers.CharField(source="student.course.course_code", read_only=True)
     exam_centre = serializers.CharField(source="exam.exam_centre", read_only=True)
     exam_fees = serializers.DecimalField(source="exam.fees", max_digits=10, decimal_places=2, read_only=True)
+
+    def validate(self, data):
+        student = data.get("student")
+        exam = data.get("exam")
+
+        if ExamStudentReg.objects.filter(student=student, exam=exam).exists():
+            raise serializers.ValidationError(
+                "This student is already registered for this exam."
+            )
+
+        return data
     class Meta:
         model = ExamStudentReg
         fields = "__all__"

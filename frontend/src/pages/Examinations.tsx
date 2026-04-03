@@ -457,7 +457,7 @@ const ExaminationsPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-accent">
-                  {stats?.total_available ?? 0} //need to change
+                  {stats?.total_available ?? 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Generated this month
