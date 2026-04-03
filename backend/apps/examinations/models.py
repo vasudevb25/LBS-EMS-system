@@ -38,7 +38,6 @@ class ExamStudentReg(models.Model):
     exam_fee_receipt = models.FileField(upload_to="exam_registrations/receipts/",null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
-            db_table = 'examinations_examstudentreg'
             constraints = [
                 models.UniqueConstraint(
                     fields=["student", "exam"],
