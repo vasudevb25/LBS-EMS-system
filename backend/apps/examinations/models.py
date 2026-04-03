@@ -37,6 +37,13 @@ class ExamStudentReg(models.Model):
     photo = models.ImageField(upload_to="exam_registrations/photos/",null=True,blank=True)
     exam_fee_receipt = models.FileField(upload_to="exam_registrations/receipts/",null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    class Meta:
+            db_table = 'examinations_examstudentreg'
+            constraints = [
+                models.UniqueConstraint(
+                    fields=["student", "exam"],
+                    name="unique_student_exam"
+                )
+            ]
     def __str__(self):
         return f"{self.student} - {self.exam}"
