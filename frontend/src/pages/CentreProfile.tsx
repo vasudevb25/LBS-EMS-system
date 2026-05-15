@@ -100,9 +100,9 @@ const CentreDashboard = () => {
         setError(null);
 
         const [centreData, coursesData, studentsData] = await Promise.all([
-          apiFetch(`/api/centres/${centreId}/`),
-          apiFetch(`/api/courses/?centre=${centreId}`),
-          apiFetch(`/api/students/?centre=${centreId}`),
+          apiFetch(`/centres/${centreId}/`),
+          apiFetch(`/courses/?centre=${centreId}`),
+          apiFetch(`/students/?centre=${centreId}`),
         ]);
 
         setCentre(centreData);

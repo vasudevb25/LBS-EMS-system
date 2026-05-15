@@ -31,7 +31,7 @@ const NotificationsPageCentre = () => {
       try {
         setLoading(true);
         const data = await apiFetch(
-          `/api/notifications/history/?centre_id=${centreId}`,
+          `/notifications/history/?centre_id=${centreId}`,
         );
         setNotifications(Array.isArray(data) ? data : []);
       } finally {

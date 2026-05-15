@@ -129,10 +129,10 @@ const ExaminationsPage = () => {
 
       const [coursesData, centresData, examsData, statsData] =
         await Promise.all([
-          apiFetch("/api/courses/"),
-          apiFetch("/api/centres/"),
-          apiFetch("/api/examinations/"),
-          apiFetch("/api/exam-stats/"),
+          apiFetch("/courses/"),
+          apiFetch("/centres/"),
+          apiFetch("/examinations/"),
+          apiFetch("/exam-stats/"),
         ]);
 
       const courseMap = Object.fromEntries(
@@ -183,12 +183,12 @@ const ExaminationsPage = () => {
       setLoading(true);
 
       if (editingId) {
-        await apiFetch(`/api/examinations/${editingId}/`, {
+        await apiFetch(`/examinations/${editingId}/`, {
           method: "PATCH",
           body: JSON.stringify(formData),
         });
       } else {
-        await apiFetch("/api/examinations/", {
+        await apiFetch("/examinations/", {
           method: "POST",
           body: JSON.stringify(formData),
         });
@@ -220,7 +220,7 @@ const ExaminationsPage = () => {
 
     try {
       setLoading(true);
-      await apiFetch(`/api/examinations/${id}/`, { method: "DELETE" });
+      await apiFetch(`/examinations/${id}/`, { method: "DELETE" });
       await fetchAll();
     } finally {
       setLoading(false);

@@ -21,7 +21,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   });
 
   // 🚨 Auto-logout ONLY for protected endpoints
-  if (res.status === 401 && endpoint !== "/api/login/") {
+  if (res.status === 401 && endpoint !== "/login/") {
     localStorage.clear();
 
     if (window.location.pathname !== "/login") {

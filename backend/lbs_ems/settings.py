@@ -101,19 +101,20 @@ WSGI_APPLICATION = "lbs_ems.wsgi.application"
 # =========================
 # DATABASE
 # =========================
-DATABASES = {
-    "default": env.db(),
-}
 # DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'lbsskil1_dbase',
-#         'USER': 'lbsskil1_LBSADMIN',
-#         'PASSWORD': 'lbsskillcentre',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
-#     }
+#     "default": env.db(),
 # }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'Pointbreaker-25',
+        'HOST': 'db.vehqjpauqsagofkgrjzu.supabase.co',
+        'PORT': '5432',
+    }
+}
+
 
 # =========================
 # TEMPLATES

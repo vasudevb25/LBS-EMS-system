@@ -41,7 +41,7 @@ const NotificationsPageAdmin = () => {
   useEffect(() => {
     const loadCentres = async () => {
       try {
-        const data = await apiFetch("/api/centres/");
+        const data = await apiFetch("/centres/");
         setCentres(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching centres:", err);
@@ -64,7 +64,7 @@ const NotificationsPageAdmin = () => {
     }
 
     try {
-      const data = await apiFetch("/api/notifications/send/", {
+      const data = await apiFetch("/notifications/send/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,7 +93,7 @@ const NotificationsPageAdmin = () => {
     if (!confirm("Delete ALL notifications?")) return;
 
     try {
-      const data = await apiFetch("/api/notifications/clear/", {
+      const data = await apiFetch("/notifications/clear/", {
         method: "DELETE",
       });
 

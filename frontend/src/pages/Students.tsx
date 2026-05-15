@@ -159,15 +159,15 @@ const StudentsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       const studentUrl = isAdmin
-        ? "/api/students/"
-        : `/api/students/?centre=${centreId}`;
+        ? "/students/"
+        : `/students/?centre=${centreId}`;
 
       const [studentData, courseData, examData, centreData] = await Promise.all(
         [
           apiFetch(studentUrl),
-          apiFetch("/api/courses/"),
-          apiFetch("/api/examinations/"),
-          !isAdmin ? apiFetch(`/api/centres/${centreId}/`) : null,
+          apiFetch("/courses/"),
+          apiFetch("/examinations/"),
+          !isAdmin ? apiFetch(`/centres/${centreId}/`) : null,
         ],
       );
 
@@ -185,7 +185,7 @@ const StudentsPage = () => {
   /* ---------------- APPROVAL ---------------- */
 
   const approveStudent = async (id: number) => {
-    await apiFetch(`/api/students/${id}/approve/`, { method: "POST" });
+    await apiFetch(`/students/${id}/approve/`, { method: "POST" });
 
     setStudents((prev) =>
       prev.map((s) => (s.student_id === id ? { ...s, status: "Approved" } : s)),
@@ -193,7 +193,7 @@ const StudentsPage = () => {
   };
 
   const rejectStudent = async (id: number) => {
-    await apiFetch(`/api/students/${id}/reject/`, { method: "POST" });
+    await apiFetch(`/students/${id}/reject/`, { method: "POST" });
 
     setStudents((prev) =>
       prev.map((s) => (s.student_id === id ? { ...s, status: "Rejected" } : s)),
@@ -266,12 +266,12 @@ const StudentsPage = () => {
     }
 
     if (editing) {
-      await apiFetch(`/api/students/${editing.student_id}/`, {
+      await apiFetch(`/students/${editing.student_id}/`, {
         method: "PUT",
         body: payload,
       });
     } else {
-      await apiFetch(`/api/students/`, {
+      await apiFetch(`/students/`, {
         method: "POST",
         body: payload,
       });
@@ -286,7 +286,7 @@ const StudentsPage = () => {
   };
 
   const deleteStudent = async (id: number) => {
-    await apiFetch(`/api/students/${id}/`, { method: "DELETE" });
+    await apiFetch(`/students/${id}/`, { method: "DELETE" });
     setStudents((prev) => prev.filter((s) => s.student_id !== id));
   };
 
@@ -308,7 +308,7 @@ const StudentsPage = () => {
     setExamLoading(true);
     setExamViewOpen(true);
 
-    const data = await apiFetch("/api/exam-registrations/");
+    const data = await apiFetch("/exam-registrations/");
 
     const filtered = data.filter((reg: any) => reg.student === studentId);
 
@@ -764,7 +764,7 @@ const StudentsPage = () => {
                     );
 
                   try {
-                    await apiFetch("/api/exam-registrations/", {
+                    await apiFetch("/exam-registrations/", {
                       method: "POST",
                       body: payload,
                     });

@@ -40,10 +40,10 @@ const Index = () => {
         setError(null);
 
         const [students, centres, courses, exams] = await Promise.all([
-          apiFetch("/api/students/"),
-          apiFetch("/api/centres/"),
-          apiFetch("/api/courses/"),
-          apiFetch("/api/examinations/"),
+          apiFetch("/students/"),
+          apiFetch("/centres/"),
+          apiFetch("/courses/"),
+          apiFetch("/examinations/"),
         ]);
 
         setStats({

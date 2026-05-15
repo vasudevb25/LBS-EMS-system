@@ -96,8 +96,8 @@ const CentresPage = () => {
       setError(null);
 
       const [centresData, statsData] = await Promise.all([
-        apiFetch("/api/centres/?format=json"),
-        apiFetch("/api/centre-stats/"),
+        apiFetch("/centres/?format=json"),
+        apiFetch("/centre-stats/"),
       ]);
 
       setCentres(
@@ -134,9 +134,25 @@ const CentresPage = () => {
     setViewOpen(true);
   };
 
+  const allowedPattern = /^[a-zA-Z0-9\s@._-]*$/;
+
+  const sanitizeInput = (value) => {
+    return value.replace(/[<>{};'"`$()%]/g, "");
+  };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    // Block invalid characters
+    if (!allowedPattern.test(value)) {
+      return;
+    }
+
+    // Sanitize dangerous characters
+    const sanitizedValue = sanitizeInput(value);
+
+    setForm({
+      ...form,
+      [name]: sanitizedValue,
+    });
   };
 
   const getValidityStatus = (endDate: string) => {
@@ -157,13 +173,10 @@ const CentresPage = () => {
   /* ---------- SAVE ---------- */
   const saveCentre = async () => {
     try {
-      await apiFetch(
-        editing ? `/api/centres/${editing.centre_id}/` : "/api/centres/",
-        {
-          method: editing ? "PUT" : "POST",
-          body: JSON.stringify(form),
-        },
-      );
+      await apiFetch(editing ? `/centres/${editing.centre_id}/` : "/centres/", {
+        method: editing ? "PUT" : "POST",
+        body: JSON.stringify(form),
+      });
       setModalOpen(false);
       fetchData();
     } catch (err: any) {
@@ -174,7 +187,7 @@ const CentresPage = () => {
   /* ---------- DELETE ---------- */
   const deleteCentre = async (id: number) => {
     if (!confirm("Delete this centre?")) return;
-    await apiFetch(`/api/centres/${id}/`, { method: "DELETE" });
+    await apiFetch(`/centres/${id}/`, { method: "DELETE" });
     fetchData();
   };
 
@@ -230,6 +243,7 @@ const CentresPage = () => {
                       onChange={handleChange}
                       required
                     />
+
                     <Input
                       name="centre_name"
                       placeholder="Name"
@@ -237,18 +251,21 @@ const CentresPage = () => {
                       onChange={handleChange}
                       required
                     />
+
                     <Input
                       name="location"
                       placeholder="Location"
                       value={form.location || ""}
                       onChange={handleChange}
                     />
+
                     <Input
                       name="district"
                       placeholder="District"
                       value={form.district || ""}
                       onChange={handleChange}
                     />
+
                     <Input
                       type="date"
                       name="validity_start_date"
@@ -256,6 +273,7 @@ const CentresPage = () => {
                       onChange={handleChange}
                       required
                     />
+
                     <Input
                       type="date"
                       name="validity_end_date"
@@ -263,6 +281,7 @@ const CentresPage = () => {
                       onChange={handleChange}
                       required
                     />
+
                     <Input
                       name="email"
                       type="email"
@@ -270,6 +289,7 @@ const CentresPage = () => {
                       value={form.email || ""}
                       onChange={handleChange}
                     />
+
                     <div className="flex justify-end gap-2">
                       <Button
                         type="button"
@@ -278,6 +298,7 @@ const CentresPage = () => {
                       >
                         Cancel
                       </Button>
+
                       <Button type="submit">
                         {editing ? "Update" : "Save"}
                       </Button>

@@ -119,7 +119,7 @@ const CoursesPage = () => {
       setLoading(true);
       setError(null);
 
-      const data: Course[] = await apiFetch("/api/courses/");
+      const data: Course[] = await apiFetch("/courses/");
       setCourses(data);
 
       const career = data.filter((c) => c.stream === "Career");
@@ -183,8 +183,8 @@ const CoursesPage = () => {
     e.preventDefault();
 
     const url = editingCourse
-      ? `/api/courses/${editingCourse.course_id}/`
-      : `/api/courses/`;
+      ? `/courses/${editingCourse.course_id}/`
+      : `/courses/`;
 
     await apiFetch(url, {
       method: editingCourse ? "PUT" : "POST",
@@ -197,7 +197,7 @@ const CoursesPage = () => {
 
   const deleteCourse = async (id: number) => {
     if (!confirm("Delete this course?")) return;
-    await apiFetch(`/api/courses/${id}/`, { method: "DELETE" });
+    await apiFetch(`/courses/${id}/`, { method: "DELETE" });
     fetchCourses();
   };
 

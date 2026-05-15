@@ -60,7 +60,7 @@ const ReportsPage = () => {
   const [centreStats, setCentreStats] = useState<CentreStats | null>(null);
 
   const [reportType, setReportType] = useState<"centre" | "course" | null>(
-    null
+    null,
   );
   const [selectedCentre, setSelectedCentre] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -79,12 +79,12 @@ const ReportsPage = () => {
           coursesData,
           centresData,
         ] = await Promise.all([
-          apiFetch("/api/students/"),
-          apiFetch("/api/centre-stats/"),
-          apiFetch("/api/exam-stats/"),
-          apiFetch("/api/std-stats/"),
-          apiFetch("/api/courses/"),
-          apiFetch("/api/centres/"),
+          apiFetch("/students/"),
+          apiFetch("/centre-stats/"),
+          apiFetch("/exam-stats/"),
+          apiFetch("/std-stats/"),
+          apiFetch("/courses/"),
+          apiFetch("/centres/"),
         ]);
 
         setCentres(centresData);
@@ -115,7 +115,7 @@ const ReportsPage = () => {
     return [
       headers.join(","),
       ...data.map((row) =>
-        headers.map((h) => JSON.stringify(row[h] ?? "")).join(",")
+        headers.map((h) => JSON.stringify(row[h] ?? "")).join(","),
       ),
     ].join("\n");
   };
@@ -136,7 +136,7 @@ const ReportsPage = () => {
     try {
       setIsLoading(true);
 
-      let url = "/api/students/";
+      let url = "/students/";
 
       if (reportType === "centre" && selectedCentre) {
         url += `?centre_id=${selectedCentre}`;

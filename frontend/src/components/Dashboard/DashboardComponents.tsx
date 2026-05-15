@@ -198,9 +198,9 @@ export function RecentActivity() {
     const load = async () => {
       try {
         const results = await Promise.allSettled([
-          apiFetch("/api/centres/"),
-          apiFetch("/api/courses/"),
-          apiFetch("/api/examinations/"),
+          apiFetch("/centres/"),
+          apiFetch("/courses/"),
+          apiFetch("/examinations/"),
         ]);
 
         const centres: Centre[] =

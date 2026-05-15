@@ -8,7 +8,7 @@ const StudentProfile = () => {
 
   useEffect(() => {
     const fetchStudent = async () => {
-      const data = await apiFetch(`/api/students/${id}/`);
+      const data = await apiFetch(`/students/${id}/`);
       setStudent(data);
     };
     fetchStudent();
